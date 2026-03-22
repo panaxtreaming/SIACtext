@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Captura de Pantalla → Extraer Datos Pago Móvil → Google Sheets</title>
+    <title>Pago Móvil OCR - Acceso con Cédula | Google Sheets</title>
     <!-- Tesseract.js para OCR -->
     <script src="https://unpkg.com/tesseract.js@5.0.0/dist/tesseract.min.js"></script>
     <style>
@@ -18,6 +18,7 @@
             font-family: 'Segoe UI', 'Roboto', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             padding: 1.5rem;
+            position: relative;
         }
 
         .container {
@@ -42,9 +43,35 @@
             flex-wrap: wrap;
         }
 
-        .header p {
-            opacity: 0.9;
-            font-size: 0.95rem;
+        .user-info-bar {
+            background: rgba(255,255,255,0.15);
+            border-radius: 50px;
+            padding: 0.5rem 1.2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.8rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .user-name {
+            font-weight: 600;
+        }
+
+        .btn-switch-user {
+            background: #f59e0b;
+            border: none;
+            color: white;
+            padding: 0.3rem 0.9rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-switch-user:hover {
+            background: #d97706;
         }
 
         /* Grid principal */
@@ -66,7 +93,6 @@
             border-radius: 1.5rem;
             box-shadow: 0 20px 40px -12px rgba(0,0,0,0.3);
             overflow: hidden;
-            transition: transform 0.2s;
         }
 
         .card-header {
@@ -112,22 +138,11 @@
 
         .btn-capture:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-        }
-
-        .btn-capture:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary-capture {
-            background: #3b82f6;
         }
 
         .preview-container {
             margin-top: 1rem;
-            position: relative;
-            display: inline-block;
-            max-width: 100%;
+            text-align: center;
         }
 
         .captured-image {
@@ -138,7 +153,6 @@
             border: 2px solid #e2e8f0;
         }
 
-        /* Barra de progreso OCR */
         .ocr-progress {
             margin-top: 1rem;
             display: none;
@@ -160,7 +174,6 @@
             background: linear-gradient(90deg, #10b981, #3b82f6);
             width: 0%;
             transition: width 0.3s;
-            border-radius: 10px;
         }
 
         /* Tabla de datos */
@@ -171,11 +184,6 @@
 
         .data-table tr {
             border-bottom: 1px solid #e2e8f0;
-            transition: background 0.2s;
-        }
-
-        .data-table tr:hover {
-            background: #f8fafc;
         }
 
         .data-table td {
@@ -191,16 +199,9 @@
         }
 
         .data-table td:last-child {
-            font-family: 'Monaco', 'Menlo', monospace;
-            color: #0f172a;
-            word-break: break-all;
+            font-family: monospace;
             cursor: pointer;
-        }
-
-        .edit-hint {
-            font-size: 0.7rem;
-            color: #94a3b8;
-            margin-left: 8px;
+            word-break: break-all;
         }
 
         /* Botones */
@@ -227,7 +228,6 @@
         .btn-primary {
             background: #10b981;
             color: white;
-            box-shadow: 0 2px 8px rgba(16,185,129,0.3);
         }
 
         .btn-primary:hover {
@@ -240,23 +240,88 @@
             color: white;
         }
 
-        .btn-success:hover {
-            background: #2563eb;
-            transform: translateY(-2px);
-        }
-
         .btn-outline {
             background: white;
             border: 2px solid #cbd5e1;
             color: #475569;
         }
 
-        .btn-outline:hover {
-            border-color: #667eea;
-            color: #667eea;
+        /* Modal de login */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: all 0.3s;
         }
 
-        /* Toast */
+        .modal-card {
+            background: white;
+            border-radius: 2rem;
+            padding: 2rem;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        }
+
+        .modal-card h2 {
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: #0f172a;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #334155;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 2rem;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .error-msg {
+            color: #dc2626;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
         .toast {
             position: fixed;
             bottom: 30px;
@@ -266,12 +331,10 @@
             color: white;
             padding: 12px 28px;
             border-radius: 50px;
-            font-weight: 500;
             z-index: 1000;
             opacity: 0;
             transition: opacity 0.3s;
             pointer-events: none;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
             font-size: 0.9rem;
         }
 
@@ -285,134 +348,129 @@
             border-radius: 0.75rem;
             font-size: 0.8rem;
             margin-top: 1rem;
-            color: #1e40af;
         }
 
-        .loading-spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .ocr-status-text {
-            font-size: 0.8rem;
-            color: #475569;
-            margin-top: 0.5rem;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-<div class="container">
+
+<!-- Modal de inicio de sesión -->
+<div id="loginModal" class="modal">
+    <div class="modal-card">
+        <h2>🔐 Acceso a la herramienta</h2>
+        <div class="input-group">
+            <label>📇 Número de Cédula</label>
+            <input type="text" id="loginCedula" placeholder="Ej: 12345678" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label>🔑 Contraseña</label>
+            <input type="password" id="loginPassword" placeholder="Contraseña">
+        </div>
+        <button class="btn-login" id="btnLogin">Ingresar</button>
+        <div id="loginError" class="error-msg"></div>
+        <div style="font-size: 0.7rem; text-align: center; margin-top: 1rem; color: #64748b;">
+            Usuarios demo: cédula 12345678 (contraseña: demo123) | cédula 13967475 (contraseña: pass456)
+        </div>
+    </div>
+</div>
+
+<div id="appContent" class="container hidden">
     <div class="header">
-        <h1>
-            📸 Captura de Pantalla → OCR
-            <span style="font-size: 0.9rem;">| Pago Móvil → Google Sheets</span>
-        </h1>
-        <p>🎯 Haz clic en "Capturar Pantalla", selecciona la ventana o pantalla con los datos de pago móvil y extrae automáticamente la información</p>
+        <h1>📸 Captura de Pantalla → OCR Pago Móvil → Google Sheets</h1>
+        <div class="user-info-bar">
+            <span>👤 Usuario: <span id="userFullName"></span></span>
+            <span>🆔 <span id="userCedula"></span></span>
+            <button class="btn-switch-user" id="btnSwitchUser">Cambiar de usuario</button>
+        </div>
     </div>
 
     <div class="main-grid">
-        <!-- Columna izquierda: Captura de pantalla -->
+        <!-- Columna izquierda: Captura -->
         <div class="card">
-            <div class="card-header">
-                🖥️ 1. Captura de pantalla directa
-            </div>
+            <div class="card-header">🖥️ 1. Captura de pantalla directa</div>
             <div class="card-body">
                 <div class="capture-area">
-                    <button class="btn-capture" id="btnCaptureScreen">
-                        📷 Capturar Pantalla
-                        <span style="font-size: 0.8rem;">🎬 (Compartir pantalla)</span>
-                    </button>
-                    <button class="btn-capture btn-secondary-capture" id="btnCaptureWindow">
-                        🪟 Capturar Ventana
-                    </button>
-                    <p style="font-size: 0.75rem; margin-top: 12px; color: #64748b;">
-                        ⚡ Al hacer clic, selecciona la pantalla/ventana que contiene los datos de pago móvil
-                    </p>
+                    <button class="btn-capture" id="btnCaptureScreen">📷 Capturar Pantalla</button>
+                    <button class="btn-capture btn-secondary-capture" id="btnCaptureWindow">🪟 Capturar Ventana</button>
                 </div>
                 <div id="previewArea" style="text-align: center; min-height: 200px;">
-                    <div style="background: #f8fafc; border-radius: 1rem; padding: 2rem; text-align: center; color: #94a3b8;">
-                        🖼️ La captura aparecerá aquí después de seleccionar pantalla
-                    </div>
+                    <div style="background: #f8fafc; border-radius: 1rem; padding: 2rem; color: #94a3b8;">🖼️ La captura aparecerá aquí</div>
                 </div>
                 <div class="ocr-progress" id="ocrProgress">
-                    <div style="font-weight: 600; margin-bottom: 8px;">🔍 Extrayendo texto con OCR...</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill"></div>
-                    </div>
+                    <div style="font-weight: 600;">🔍 Extrayendo texto...</div>
+                    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
                     <div id="ocrStatus" class="ocr-status-text"></div>
                 </div>
                 <div id="ocrRawContainer" style="display: none; margin-top: 1rem; background: #f1f5f9; border-radius: 0.75rem; padding: 0.75rem; font-size: 0.7rem; max-height: 120px; overflow: auto;">
                     <strong>📄 Texto extraído:</strong>
-                    <div id="rawText" style="margin-top: 5px; white-space: pre-wrap; font-family: monospace;"></div>
+                    <div id="rawText" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
         </div>
 
         <!-- Columna derecha: Datos extraídos -->
         <div class="card">
-            <div class="card-header">
-                📋 2. Datos extraídos (doble clic para editar)
-            </div>
+            <div class="card-header">📋 2. Datos extraídos (doble clic para editar)</div>
             <div class="card-body">
                 <table class="data-table" id="dataTable">
-                    <tr><td>🧑 Nombre y Apellido</td><td id="field-nombre" class="editable-cell">—</td></tr>
-                    <tr><td>📞 Teléfono de contacto</td><td id="field-telefono" class="editable-cell">—</td></tr>
-                    <tr><td>✉️ Correo electrónico</td><td id="field-email" class="editable-cell">—</td></tr>
-                    <tr><td>🆔 Cédula (identidad)</td><td id="field-cedula" class="editable-cell">—</td></tr>
-                    <tr><td>🏦 Banco (Pago Móvil)</td><td id="field-banco" class="editable-cell">—</td></tr>
-                    <tr><td>💰 Cédula beneficiario</td><td id="field-cedula-beneficiario" class="editable-cell">—</td></tr>
-                    <tr><td>📱 Teléfono Pago Móvil</td><td id="field-telefono-pago" class="editable-cell">—</td></tr>
+                    <tr><td>🧑 Nombre y Apellido</td><td id="field-nombre">—</td></tr>
+                    <tr><td>📞 Teléfono de contacto</td><td id="field-telefono">—</td></tr>
+                    <tr><td>✉️ Correo electrónico</td><td id="field-email">—</td></tr>
+                    <tr><td>🆔 Cédula (identidad)</td><td id="field-cedula">—</td></tr>
+                    <tr><td>🏦 Banco (Pago Móvil)</td><td id="field-banco">—</td></tr>
+                    <tr><td>💰 Cédula beneficiario</td><td id="field-cedula-beneficiario">—</td></tr>
+                    <tr><td>📱 Teléfono Pago Móvil</td><td id="field-telefono-pago">—</td></tr>
                 </table>
 
                 <div class="btn-group">
                     <button class="btn btn-primary" id="btnCopySheets">
-                        📋 COPIAR PARA GOOGLE SHEETS
-                        <span style="font-size: 0.7rem;">↗️ (columnas)</span>
+                        📋 COPIAR PARA GOOGLE SHEETS + CÉDULA USUARIO
                     </button>
-                    <button class="btn btn-success" id="btnCopyAll">
-                        📄 Copiar todo (texto)
-                    </button>
-                    <button class="btn btn-outline" id="btnReset">
-                        🔄 Reiniciar
-                    </button>
+                    <button class="btn btn-success" id="btnCopyAll">📄 Copiar todo (texto)</button>
+                    <button class="btn btn-outline" id="btnReset">🔄 Reiniciar</button>
                 </div>
 
                 <div class="info-badge">
-                    <strong>✨ Cómo usar:</strong><br>
-                    1. Haz clic en "Capturar Pantalla" y selecciona la ventana con los datos del pago móvil<br>
-                    2. La herramienta extraerá automáticamente los datos con OCR<br>
-                    3. Revisa y edita los campos si es necesario (doble clic)<br>
-                    4. Presiona "COPIAR PARA GOOGLE SHEETS" y pega (Ctrl+V) en Google Sheets
+                    <strong>✨ Incluye automáticamente tu cédula al copiar a Sheets</strong><br>
+                    Al copiar se genera una fila con 8 columnas: los 7 datos extraídos + tu cédula.
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div id="toast" class="toast">✅ Copiado al portapapeles</div>
+<div id="toast" class="toast">✅ Copiado</div>
 
 <script>
-    // Datos extraídos
+    // ---------- CONFIGURACIÓN ----------
+    // URL del archivo CSV con usuarios (cambiar por tu repositorio real)
+    const USERS_CSV_URL = 'https://raw.githubusercontent.com/panaxtreaming/SIACtext/main/usuarios.csv';
+    // Si no tienes el CSV en línea, se usa un respaldo local para demostración
+    const DEMO_USERS = [
+        { cedula: "12345678", nombre: "María González", password: "demo123" },
+        { cedula: "13967475", nombre: "Carlos Rodríguez", password: "pass456" }
+    ];
+
+    let currentUser = null; // { cedula, nombreCompleto }
     let currentExtractedData = {
-        nombre: "",
-        telefono: "",
-        email: "",
-        cedula: "",
-        banco: "",
-        cedulaBeneficiario: "",
-        telefonoPago: ""
+        nombre: "", telefono: "", email: "", cedula: "",
+        banco: "", cedulaBeneficiario: "", telefonoPago: ""
     };
 
     // Elementos DOM
+    const loginModal = document.getElementById('loginModal');
+    const appContent = document.getElementById('appContent');
+    const loginCedula = document.getElementById('loginCedula');
+    const loginPassword = document.getElementById('loginPassword');
+    const btnLogin = document.getElementById('btnLogin');
+    const loginError = document.getElementById('loginError');
+    const btnSwitchUser = document.getElementById('btnSwitchUser');
+    const userFullNameSpan = document.getElementById('userFullName');
+    const userCedulaSpan = document.getElementById('userCedula');
+
     const previewArea = document.getElementById('previewArea');
     const ocrProgressDiv = document.getElementById('ocrProgress');
     const progressFill = document.getElementById('progressFill');
@@ -421,266 +479,239 @@
     const rawTextDiv = document.getElementById('rawText');
     const toast = document.getElementById('toast');
 
-    // Mostrar notificación
-    function showToast(message, duration = 2500) {
-        toast.textContent = message || '✅ Copiado al portapapeles';
+    // ---------- FUNCIONES AUXILIARES ----------
+    function showToast(msg, duration = 2500) {
+        toast.textContent = msg;
         toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-        }, duration);
+        setTimeout(() => toast.classList.remove('show'), duration);
     }
 
-    // Actualizar tabla
+    // Cargar usuarios desde CSV remoto o demo si falla
+    async function loadUsersFromCSV() {
+        try {
+            const response = await fetch(USERS_CSV_URL);
+            if (!response.ok) throw new Error('No se pudo cargar CSV');
+            const csvText = await response.text();
+            const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+            if (lines.length === 0) throw new Error('CSV vacío');
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const cedulaIdx = headers.findIndex(h => h.includes('cedula') || h === 'cedula');
+            const nombreIdx = headers.findIndex(h => h.includes('nombre') || h === 'nombre');
+            const passIdx = headers.findIndex(h => h.includes('contraseña') || h === 'password' || h === 'contrasena');
+            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1) throw new Error('Formato CSV incorrecto');
+            const users = [];
+            for (let i = 1; i < lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                if (cols.length > Math.max(cedulaIdx, nombreIdx, passIdx)) {
+                    users.push({
+                        cedula: cols[cedulaIdx],
+                        nombreCompleto: cols[nombreIdx],
+                        password: cols[passIdx]
+                    });
+                }
+            }
+            if (users.length === 0) throw new Error('No hay usuarios');
+            return users;
+        } catch (error) {
+            console.warn('Usando usuarios demo por error:', error);
+            return DEMO_USERS;
+        }
+    }
+
+    // Validar credenciales
+    async function authenticate(cedula, password) {
+        const users = await loadUsersFromCSV();
+        const user = users.find(u => u.cedula === cedula && u.password === password);
+        if (user) {
+            return { cedula: user.cedula, nombreCompleto: user.nombreCompleto };
+        }
+        return null;
+    }
+
+    // Iniciar sesión
+    async function login(cedula, password) {
+        const user = await authenticate(cedula, password);
+        if (user) {
+            currentUser = user;
+            localStorage.setItem('pagoMovilUser', JSON.stringify(user));
+            loginModal.classList.add('hidden');
+            appContent.classList.remove('hidden');
+            userFullNameSpan.textContent = currentUser.nombreCompleto;
+            userCedulaSpan.textContent = currentUser.cedula;
+            showToast(`✅ Bienvenido, ${currentUser.nombreCompleto}`);
+            return true;
+        } else {
+            loginError.textContent = 'Cédula o contraseña incorrecta';
+            return false;
+        }
+    }
+
+    // Cerrar sesión / cambiar usuario
+    function logout() {
+        localStorage.removeItem('pagoMovilUser');
+        currentUser = null;
+        appContent.classList.add('hidden');
+        loginModal.classList.remove('hidden');
+        loginCedula.value = '';
+        loginPassword.value = '';
+        loginError.textContent = '';
+        // Limpiar datos actuales
+        currentExtractedData = { nombre: "", telefono: "", email: "", cedula: "", banco: "", cedulaBeneficiario: "", telefonoPago: "" };
+        updateDataTable();
+        previewArea.innerHTML = `<div style="background: #f8fafc; border-radius: 1rem; padding: 2rem; color: #94a3b8;">🖼️ La captura aparecerá aquí</div>`;
+        ocrProgressDiv.style.display = 'none';
+        ocrRawContainer.style.display = 'none';
+    }
+
+    // Verificar sesión al cargar
+    async function checkSession() {
+        const stored = localStorage.getItem('pagoMovilUser');
+        if (stored) {
+            try {
+                const user = JSON.parse(stored);
+                // Validar que siga existiendo en el CSV (opcional pero evita usar credenciales inválidas)
+                const users = await loadUsersFromCSV();
+                const valid = users.some(u => u.cedula === user.cedula);
+                if (valid) {
+                    currentUser = user;
+                    loginModal.classList.add('hidden');
+                    appContent.classList.remove('hidden');
+                    userFullNameSpan.textContent = currentUser.nombreCompleto;
+                    userCedulaSpan.textContent = currentUser.cedula;
+                    return;
+                }
+            } catch(e) {}
+        }
+        // Si no hay sesión válida, mostrar login
+        loginModal.classList.remove('hidden');
+        appContent.classList.add('hidden');
+    }
+
+    // ---------- OCR Y EXTRACCIÓN (igual que antes pero adaptado) ----------
     function updateDataTable() {
-        document.getElementById('field-nombre').innerHTML = (currentExtractedData.nombre || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
-        document.getElementById('field-telefono').innerHTML = (currentExtractedData.telefono || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
-        document.getElementById('field-email').innerHTML = (currentExtractedData.email || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
-        document.getElementById('field-cedula').innerHTML = (currentExtractedData.cedula || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
-        document.getElementById('field-banco').innerHTML = (currentExtractedData.banco || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
-        document.getElementById('field-cedula-beneficiario').innerHTML = (currentExtractedData.cedulaBeneficiario || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
-        document.getElementById('field-telefono-pago').innerHTML = (currentExtractedData.telefonoPago || '<span style="color:#94a3b8;">—</span>') + '<span class="edit-hint">✏️</span>';
+        document.getElementById('field-nombre').innerHTML = (currentExtractedData.nombre || '—') + '<span style="font-size:0.7rem; margin-left:6px;">✏️</span>';
+        document.getElementById('field-telefono').innerHTML = (currentExtractedData.telefono || '—') + '✏️';
+        document.getElementById('field-email').innerHTML = (currentExtractedData.email || '—') + '✏️';
+        document.getElementById('field-cedula').innerHTML = (currentExtractedData.cedula || '—') + '✏️';
+        document.getElementById('field-banco').innerHTML = (currentExtractedData.banco || '—') + '✏️';
+        document.getElementById('field-cedula-beneficiario').innerHTML = (currentExtractedData.cedulaBeneficiario || '—') + '✏️';
+        document.getElementById('field-telefono-pago').innerHTML = (currentExtractedData.telefonoPago || '—') + '✏️';
     }
 
-    // Hacer celdas editables con doble clic
-    function makeFieldsEditable() {
+    function makeEditable() {
         const fields = [
-            { id: 'field-nombre', key: 'nombre' },
-            { id: 'field-telefono', key: 'telefono' },
-            { id: 'field-email', key: 'email' },
-            { id: 'field-cedula', key: 'cedula' },
-            { id: 'field-banco', key: 'banco' },
-            { id: 'field-cedula-beneficiario', key: 'cedulaBeneficiario' },
+            { id: 'field-nombre', key: 'nombre' }, { id: 'field-telefono', key: 'telefono' },
+            { id: 'field-email', key: 'email' }, { id: 'field-cedula', key: 'cedula' },
+            { id: 'field-banco', key: 'banco' }, { id: 'field-cedula-beneficiario', key: 'cedulaBeneficiario' },
             { id: 'field-telefono-pago', key: 'telefonoPago' }
         ];
-
-        fields.forEach(field => {
-            const element = document.getElementById(field.id);
-            element.style.cursor = 'pointer';
-            element.title = 'Doble clic para editar';
-            
-            element.addEventListener('dblclick', function(e) {
-                e.stopPropagation();
-                const currentValue = currentExtractedData[field.key] || '';
+        fields.forEach(f => {
+            const el = document.getElementById(f.id);
+            el.style.cursor = 'pointer';
+            el.title = 'Doble clic para editar';
+            el.addEventListener('dblclick', function() {
+                const currentVal = currentExtractedData[f.key] || '';
                 const input = document.createElement('input');
-                input.type = 'text';
-                input.value = currentValue;
+                input.value = currentVal;
                 input.style.width = '95%';
-                input.style.padding = '6px 10px';
+                input.style.padding = '4px 8px';
                 input.style.borderRadius = '8px';
                 input.style.border = '2px solid #10b981';
-                input.style.fontFamily = 'monospace';
-                input.style.fontSize = '0.85rem';
-                input.style.background = 'white';
-                
-                const originalContent = this;
                 const parent = this.parentNode;
+                const original = this;
                 parent.replaceChild(input, this);
                 input.focus();
-                
-                function saveEdit() {
-                    const newValue = input.value.trim();
-                    currentExtractedData[field.key] = newValue;
+                function save() {
+                    currentExtractedData[f.key] = input.value.trim();
                     updateDataTable();
-                    parent.replaceChild(originalContent, input);
+                    parent.replaceChild(original, input);
                 }
-                
-                input.addEventListener('blur', saveEdit);
-                input.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        saveEdit();
-                    }
-                });
+                input.addEventListener('blur', save);
+                input.addEventListener('keypress', e => { if(e.key === 'Enter') save(); });
             });
         });
     }
 
-    // Extraer datos del texto OCR
     function extractDataFromOCR(text) {
-        const data = {
-            nombre: "",
-            telefono: "",
-            email: "",
-            cedula: "",
-            banco: "",
-            cedulaBeneficiario: "",
-            telefonoPago: ""
-        };
-        
-        // Buscar Nombre y Apellido
+        const data = { nombre: "", telefono: "", email: "", cedula: "", banco: "", cedulaBeneficiario: "", telefonoPago: "" };
         const nombreMatch = text.match(/(?:Nombre\s*y\s*Apellido:|NOMBRE\s*Y\s*APELLIDO:?)\s*([^\n\r]{3,40})/i);
-        if (nombreMatch && nombreMatch[1].trim() && !nombreMatch[1].match(/teléfono|correo|cedula/i)) {
-            data.nombre = nombreMatch[1].trim();
-        } else {
-            const lines = text.split('\n');
-            for (let line of lines) {
-                if (line.match(/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,}/) && !line.match(/teléfono|correo|banco|pago/i)) {
-                    data.nombre = line.trim();
-                    break;
-                }
-            }
-        }
-        
-        // Teléfono de contacto
-        const telefonoMatch = text.match(/(?:Teléfono\s*de\s*contacto:|Teléfono:|Telefono:?)\s*([\d\s\-\(\)]{7,15})/i) ||
-                              text.match(/(0412|0414|0424|0416|0426)[\s\-]?(\d{7})/i);
+        if (nombreMatch && nombreMatch[1].trim()) data.nombre = nombreMatch[1].trim();
+        const telefonoMatch = text.match(/(?:Teléfono\s*de\s*contacto:|Teléfono:|Telefono:?)\s*([\d\s\-\(\)]{7,15})/i) || text.match(/(0412|0414|0424|0416|0426)[\s\-]?(\d{7})/i);
         if (telefonoMatch) {
             let phone = telefonoMatch[0].replace(/[^\d]/g, '');
-            if (phone.length >= 10) {
-                data.telefono = phone.substring(0, 4) + '-' + phone.substring(4);
-            } else if (telefonoMatch[1]) {
-                data.telefono = telefonoMatch[1].trim();
-            }
+            if (phone.length >= 10) data.telefono = phone.substring(0,4)+'-'+phone.substring(4);
+            else data.telefono = telefonoMatch[1]?.trim() || '';
         }
-        
-        // Correo
         const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
         if (emailMatch) data.email = emailMatch[0];
-        
-        // Cédula
-        const cedulaMatch = text.match(/(?:Cédula:|Cedula:|C.I:|CI:?)\s*([VvEe]?[\s\-]?\d{1,3}[\.\s]?\d{3}[\.\s]?\d{3,4})/i) ||
-                           text.match(/(?:Cédula:|Cedula:)\s*([\d\.]{6,12})/i);
+        const cedulaMatch = text.match(/(?:Cédula:|Cedula:|C.I:|CI:?)\s*([VvEe]?[\s\-]?\d{1,3}[\.\s]?\d{3}[\.\s]?\d{3,4})/i);
         if (cedulaMatch) data.cedula = cedulaMatch[1].trim().replace(/\s/g, '');
-        
-        // Banco
-        if (text.match(/Banco\s*de\s*Venezuela/i)) {
-            data.banco = "Banco de Venezuela";
-        } else if (text.match(/Banco\s*Provincial/i)) data.banco = "Banco Provincial";
+        if (text.match(/Banco\s*de\s*Venezuela/i)) data.banco = "Banco de Venezuela";
         else if (text.match(/Banesco/i)) data.banco = "Banesco";
-        else if (text.match(/Mercantil/i)) data.banco = "Banco Mercantil";
-        
-        // Cédula beneficiario (pago móvil)
-        const cedulaBenefMatch = text.match(/(?:Cédula:?)\s*(\d{1,2}\.\d{3}\.\d{3,4})/i) ||
-                                 text.match(/13\.967\.475/) ||
-                                 text.match(/(\d{2}\.\d{3}\.\d{3})/);
-        if (cedulaBenefMatch) data.cedulaBeneficiario = cedulaBenefMatch[1] || cedulaBenefMatch[0];
-        
-        // Teléfono Pago Móvil específico
-        const telfPagoMatch = text.match(/(0412|0414|0424|0416)[\s\-]?(\d{7})/i);
-        if (telfPagoMatch) {
-            data.telefonoPago = telfPagoMatch[0].replace(/[^\d]/g, '');
-            if (data.telefonoPago.length === 11) {
-                data.telefonoPago = data.telefonoPago.substring(0, 4) + '-' + data.telefonoPago.substring(4);
-            }
-        }
-        
-        // Si hay datos específicos de la imagen de ejemplo
-        if (text.includes('13.967.475')) data.cedulaBeneficiario = "13.967.475";
-        if (text.includes('0412-0754787') || (text.includes('0412') && text.includes('0754787'))) {
-            data.telefonoPago = "0412-0754787";
-        }
-        
+        const cedulaBenef = text.match(/(?:Cédula:?)\s*(\d{1,2}\.\d{3}\.\d{3,4})/i) || text.match(/13\.967\.475/);
+        if (cedulaBenef) data.cedulaBeneficiario = cedulaBenef[1] || cedulaBenef[0];
+        const telfPago = text.match(/(0412|0414|0424)[\s\-]?(\d{7})/i);
+        if (telfPago) data.telefonoPago = telfPago[0].replace(/[^\d]/g,'').replace(/^(\d{4})(\d{7})/,'$1-$2');
+        if (text.includes('0412-0754787')) data.telefonoPago = "0412-0754787";
         return data;
     }
 
-    // Procesar imagen con OCR
     async function processImageFromCanvas(canvas) {
         ocrProgressDiv.style.display = 'block';
         ocrRawContainer.style.display = 'none';
         progressFill.style.width = '0%';
         ocrStatus.textContent = 'Iniciando OCR...';
-        
         try {
-            // Convertir canvas a blob
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-            
-            const { data: { text } } = await Tesseract.recognize(
-                blob,
-                'spa+eng',
-                {
-                    logger: (m) => {
-                        if (m.status === 'recognizing text') {
-                            const progress = Math.floor(m.progress * 100);
-                            progressFill.style.width = `${progress}%`;
-                            ocrStatus.textContent = `Reconociendo texto... ${progress}%`;
-                        }
+            const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+            const { data: { text } } = await Tesseract.recognize(blob, 'spa+eng', {
+                logger: (m) => {
+                    if (m.status === 'recognizing text') {
+                        const prog = Math.floor(m.progress * 100);
+                        progressFill.style.width = `${prog}%`;
+                        ocrStatus.textContent = `Reconociendo... ${prog}%`;
                     }
                 }
-            );
-            
+            });
             progressFill.style.width = '100%';
             ocrStatus.textContent = '✅ OCR completado';
-            
-            // Mostrar texto raw
             rawTextDiv.textContent = text.substring(0, 800);
             ocrRawContainer.style.display = 'block';
-            
-            // Extraer datos
             const extracted = extractDataFromOCR(text);
             currentExtractedData = extracted;
             updateDataTable();
-            
-            showToast('✅ Datos extraídos correctamente de la captura', 2500);
-            
-        } catch (error) {
-            console.error('OCR Error:', error);
-            ocrStatus.textContent = '❌ Error al procesar la imagen';
-            showToast('Error al procesar la captura. Intenta con una imagen más clara.', 3000);
+            showToast('Datos extraídos correctamente');
+        } catch(e) {
+            console.error(e);
+            ocrStatus.textContent = '❌ Error en OCR';
+            showToast('Error al procesar la captura');
         }
     }
 
-    // Capturar pantalla/ventana
     async function startScreenCapture(displayMediaOptions = {}) {
+        if (!currentUser) { showToast('Debes iniciar sesión primero'); return; }
         try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({
-                video: {
-                    cursor: "always"
-                },
-                audio: false,
-                ...displayMediaOptions
-            });
-            
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false, ...displayMediaOptions });
             const video = document.createElement('video');
             video.srcObject = stream;
             await video.play();
-            
-            // Esperar a que haya video
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // Crear canvas con la captura
+            await new Promise(r => setTimeout(r, 500));
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            // Mostrar preview
+            canvas.getContext('2d').drawImage(video, 0, 0);
             const imgURL = canvas.toDataURL('image/png');
-            previewArea.innerHTML = `<div class="preview-container">
-                <img src="${imgURL}" class="captured-image" alt="Captura de pantalla">
-                <div style="margin-top: 8px; font-size: 0.75rem; color: #10b981;">✅ Captura realizada</div>
-            </div>`;
-            
-            // Procesar OCR
+            previewArea.innerHTML = `<div class="preview-container"><img src="${imgURL}" class="captured-image"><div style="font-size:0.75rem; color:#10b981;">✅ Captura lista</div></div>`;
             await processImageFromCanvas(canvas);
-            
-            // Detener stream
-            stream.getTracks().forEach(track => track.stop());
-            
-        } catch (err) {
-            console.error('Error al capturar pantalla:', err);
-            if (err.name === 'NotAllowedError') {
-                showToast('❌ Permiso denegado para capturar pantalla', 3000);
-            } else if (err.name === 'NotFoundError') {
-                showToast('❌ No se encontró fuente de captura', 3000);
-            } else {
-                showToast('❌ Error al capturar: ' + err.message, 3000);
-            }
+            stream.getTracks().forEach(t => t.stop());
+        } catch(err) {
+            if(err.name !== 'NotAllowedError') showToast('Error al capturar: ' + err.message);
             ocrProgressDiv.style.display = 'none';
         }
     }
 
-    // Eventos de botones
-    document.getElementById('btnCaptureScreen').addEventListener('click', () => {
-        startScreenCapture();
-    });
-    
-    document.getElementById('btnCaptureWindow').addEventListener('click', () => {
-        startScreenCapture({ video: { displaySurface: "window" } });
-    });
-    
-    // Copiar a Google Sheets
-    document.getElementById('btnCopySheets').addEventListener('click', async () => {
-        const row = [
+    // Copiar a Google Sheets incluyendo la cédula del usuario
+    function getGoogleSheetsRowWithUser() {
+        const baseRow = [
             currentExtractedData.nombre || '',
             currentExtractedData.telefono || '',
             currentExtractedData.email || '',
@@ -688,70 +719,70 @@
             currentExtractedData.banco || '',
             currentExtractedData.cedulaBeneficiario || '',
             currentExtractedData.telefonoPago || ''
-        ].join('\t');
-        
+        ];
+        // Añadir la cédula del usuario que capturó los datos en la última columna
+        baseRow.push(currentUser ? currentUser.cedula : '');
+        return baseRow.join('\t');
+    }
+
+    async function copyToSheets() {
+        if (!currentUser) { showToast('Inicia sesión primero'); return; }
+        const row = getGoogleSheetsRowWithUser();
         try {
             await navigator.clipboard.writeText(row);
-            showToast('📊 Listo para pegar en Google Sheets (columnas separadas)');
-        } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = row;
-            document.body.appendChild(textarea);
-            textarea.select();
+            showToast('📊 Copiado con tu cédula - Listo para pegar en Google Sheets');
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = row;
+            document.body.appendChild(ta);
+            ta.select();
             document.execCommand('copy');
-            document.body.removeChild(textarea);
-            showToast('📊 Copiado - pega en Google Sheets (Ctrl+V)');
+            document.body.removeChild(ta);
+            showToast('Copiado (fallback) - Pega en Sheets');
         }
-    });
-    
-    // Copiar todo
-    document.getElementById('btnCopyAll').addEventListener('click', async () => {
-        const fullText = `📋 DATOS PAGO MÓVIL (Extraídos por OCR)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧑 Nombre y Apellido: ${currentExtractedData.nombre || '—'}
-📞 Teléfono de contacto: ${currentExtractedData.telefono || '—'}
-✉️ Correo electrónico: ${currentExtractedData.email || '—'}
-🆔 Cédula: ${currentExtractedData.cedula || '—'}
+    }
 
-🏦 DATOS PAGO MÓVIL:
-• Banco: ${currentExtractedData.banco || '—'}
-• Cédula beneficiario: ${currentExtractedData.cedulaBeneficiario || '—'}
-• Teléfono Pago Móvil: ${currentExtractedData.telefonoPago || '—'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-        
-        try {
-            await navigator.clipboard.writeText(fullText);
-            showToast('📄 Texto completo copiado');
-        } catch (err) {
-            const textarea = document.createElement('textarea');
-            textarea.value = fullText;
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            showToast('📄 Copiado');
-        }
-    });
-    
-    // Reiniciar
-    document.getElementById('btnReset').addEventListener('click', () => {
-        currentExtractedData = {
-            nombre: "", telefono: "", email: "", cedula: "",
-            banco: "", cedulaBeneficiario: "", telefonoPago: ""
-        };
+    function copyFullText() {
+        const full = `📋 Datos Pago Móvil (Usuario: ${currentUser?.nombreCompleto || ''} - Cédula ${currentUser?.cedula || ''})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧑 Nombre: ${currentExtractedData.nombre || '—'}
+📞 Teléfono contacto: ${currentExtractedData.telefono || '—'}
+✉️ Email: ${currentExtractedData.email || '—'}
+🆔 Cédula: ${currentExtractedData.cedula || '—'}
+🏦 Banco: ${currentExtractedData.banco || '—'}
+💰 Cédula beneficiario: ${currentExtractedData.cedulaBeneficiario || '—'}
+📱 Teléfono Pago: ${currentExtractedData.telefonoPago || '—'}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+        navigator.clipboard.writeText(full).then(() => showToast('Texto copiado')).catch(() => alert('No se pudo copiar'));
+    }
+
+    function resetAll() {
+        currentExtractedData = { nombre:"", telefono:"", email:"", cedula:"", banco:"", cedulaBeneficiario:"", telefonoPago:"" };
         updateDataTable();
-        previewArea.innerHTML = `<div style="background: #f8fafc; border-radius: 1rem; padding: 2rem; text-align: center; color: #94a3b8;">
-            🖼️ La captura aparecerá aquí después de seleccionar pantalla
-        </div>`;
+        previewArea.innerHTML = `<div style="background:#f8fafc; border-radius:1rem; padding:2rem; color:#94a3b8;">🖼️ La captura aparecerá aquí</div>`;
         ocrProgressDiv.style.display = 'none';
         ocrRawContainer.style.display = 'none';
-        showToast('🔄 Datos reiniciados', 1500);
+        showToast('Datos reiniciados');
+    }
+
+    // Eventos
+    btnLogin.addEventListener('click', async () => {
+        const ced = loginCedula.value.trim();
+        const pass = loginPassword.value.trim();
+        if (!ced || !pass) { loginError.textContent = 'Complete ambos campos'; return; }
+        await login(ced, pass);
     });
-    
+    btnSwitchUser.addEventListener('click', logout);
+    document.getElementById('btnCaptureScreen').addEventListener('click', () => startScreenCapture());
+    document.getElementById('btnCaptureWindow').addEventListener('click', () => startScreenCapture({ video: { displaySurface: "window" } }));
+    document.getElementById('btnCopySheets').addEventListener('click', copyToSheets);
+    document.getElementById('btnCopyAll').addEventListener('click', copyFullText);
+    document.getElementById('btnReset').addEventListener('click', resetAll);
+
     // Inicializar
+    checkSession();
+    makeEditable();
     updateDataTable();
-    makeFieldsEditable();
-    showToast('🎯 Listo - Haz clic en "Capturar Pantalla" para empezar', 3000);
 </script>
 </body>
 </html>
