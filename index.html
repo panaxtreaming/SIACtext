@@ -490,44 +490,34 @@
     async function loadUsersFromCSV() {
         try {
             const response = await fetch(USERS_CSV_URL);
-            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (!response.ok) throw new Error('No se pudo cargar CSV');
             const csvText = await response.text();
-            if (!csvText.trim()) throw new Error('El archivo CSV está vacío');
-        
             const lines = csvText.split(/\r?\n/).filter(l => l.trim());
-            if (lines.length === 0) throw new Error('CSV sin líneas');
-        
+            if (lines.length === 0) throw new Error('CSV vacío');
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const cedulaIdx = headers.findIndex(h => h.includes('cedula'));
-            const nombreIdx = headers.findIndex(h => h.includes('nombre'));
-            const passIdx = headers.findIndex(h => h.includes('contraseña') || h.includes('password') || h.includes('contrasena'));
-        
-            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1) {
-                console.error('Encabezados encontrados:', headers);
-                throw new Error(`Formato CSV incorrecto. Se esperaban columnas: cedula, nombre, contraseña. Encontrado: ${headers.join(', ')}`);
-            }
-        
+            const cedulaIdx = headers.findIndex(h => h.includes('cedula') || h === 'cedula');
+            const nombreIdx = headers.findIndex(h => h.includes('nombre') || h === 'nombre');
+            const passIdx = headers.findIndex(h => h.includes('contraseña') || h === 'password' || h === 'contrasena');
+            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1) throw new Error('Formato CSV incorrecto');
             const users = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(',').map(c => c.trim());
                 if (cols.length > Math.max(cedulaIdx, nombreIdx, passIdx)) {
                     users.push({
-                       cedula: cols[cedulaIdx],
-                       nombreCompleto: cols[nombreIdx],
-                       password: cols[passIdx]
-                   });
+                        cedula: cols[cedulaIdx],
+                        nombreCompleto: cols[nombreIdx],
+                        password: cols[passIdx]
+                    });
                 }
             }
-            if (users.length === 0) throw new Error('No se encontraron usuarios en el CSV');
+            if (users.length === 0) throw new Error('No hay usuarios');
             return users;
         } catch (error) {
-            console.error('Error cargando CSV:', error.message);
-            // Mostrar un toast o alert con el error (opcional)
-            showToast(`Error al cargar usuarios: ${error.message}`, 5000);
-            return DEMO_USERS; // fallback
+            console.warn('Usando usuarios demo por error:', error);
+            return DEMO_USERS;
         }
     }
-    
+
     // Validar credenciales
     async function authenticate(cedula, password) {
         const users = await loadUsersFromCSV();
