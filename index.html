@@ -26,7 +26,6 @@
             margin: 0 auto;
         }
 
-        /* Header */
         .header {
             text-align: center;
             color: white;
@@ -74,7 +73,6 @@
             background: #d97706;
         }
 
-        /* Grid principal */
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -87,7 +85,6 @@
             }
         }
 
-        /* Tarjetas */
         .card {
             background: white;
             border-radius: 1.5rem;
@@ -110,7 +107,6 @@
             padding: 1.5rem;
         }
 
-        /* Área de captura */
         .capture-area {
             background: #f1f5f9;
             border-radius: 1rem;
@@ -176,7 +172,6 @@
             transition: width 0.3s;
         }
 
-        /* Tabla de datos */
         .data-table {
             width: 100%;
             border-collapse: collapse;
@@ -204,7 +199,6 @@
             word-break: break-all;
         }
 
-        /* Botones */
         .btn-group {
             display: flex;
             gap: 1rem;
@@ -246,7 +240,6 @@
             color: #475569;
         }
 
-        /* Modal de login */
         .modal {
             position: fixed;
             top: 0;
@@ -371,9 +364,7 @@
         </div>
         <button class="btn-login" id="btnLogin">Ingresar</button>
         <div id="loginError" class="error-msg"></div>
-        <div style="font-size: 0.7rem; text-align: center; margin-top: 1rem; color: #64748b;">
-            Usuarios demo: cédula 12345678 (contraseña: demo123) | cédula 13967475 (contraseña: pass456)
-        </div>
+        <!-- Eliminado el mensaje de usuarios demo -->
     </div>
 </div>
 
@@ -446,13 +437,8 @@
 
 <script>
     // ---------- CONFIGURACIÓN ----------
-    // URL del archivo CSV con usuarios (cambiar por tu repositorio real)
+    // Reemplaza esta URL con la ruta RAW de tu archivo CSV en GitHub
     const USERS_CSV_URL = 'https://raw.githubusercontent.com/panaxtreaming/SIACtext/main/usuarios.csv';
-    // Si no tienes el CSV en línea, se usa un respaldo local para demostración
-    const DEMO_USERS = [
-        { cedula: "12345678", nombre: "María González", password: "demo123" },
-        { cedula: "13967475", nombre: "Carlos Rodríguez", password: "pass456" }
-    ];
 
     let currentUser = null; // { cedula, nombreCompleto }
     let currentExtractedData = {
@@ -486,19 +472,29 @@
         setTimeout(() => toast.classList.remove('show'), duration);
     }
 
-    // Cargar usuarios desde CSV remoto o demo si falla
+    // Cargar usuarios desde CSV (sin fallback a demos)
     async function loadUsersFromCSV() {
         try {
             const response = await fetch(USERS_CSV_URL);
-            if (!response.ok) throw new Error('No se pudo cargar CSV');
+            if (!response.ok) {
+                throw new Error(`No se pudo cargar el archivo CSV (${response.status})`);
+            }
             const csvText = await response.text();
+            if (!csvText.trim()) throw new Error('El archivo CSV está vacío');
+
             const lines = csvText.split(/\r?\n/).filter(l => l.trim());
-            if (lines.length === 0) throw new Error('CSV vacío');
+            if (lines.length === 0) throw new Error('CSV sin líneas');
+
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const cedulaIdx = headers.findIndex(h => h.includes('cedula') || h === 'cedula');
-            const nombreIdx = headers.findIndex(h => h.includes('nombre') || h === 'nombre');
-            const passIdx = headers.findIndex(h => h.includes('contraseña') || h === 'password' || h === 'contrasena');
-            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1) throw new Error('Formato CSV incorrecto');
+            const cedulaIdx = headers.findIndex(h => h.includes('cedula'));
+            const nombreIdx = headers.findIndex(h => h.includes('nombre'));
+            const passIdx = headers.findIndex(h => h.includes('contraseña') || h.includes('password') || h.includes('contrasena'));
+
+            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1) {
+                console.error('Encabezados encontrados:', headers);
+                throw new Error(`Formato CSV incorrecto. Se esperaban columnas: cedula, nombre, contraseña. Encontrado: ${headers.join(', ')}`);
+            }
+
             const users = [];
             for (let i = 1; i < lines.length; i++) {
                 const cols = lines[i].split(',').map(c => c.trim());
@@ -510,11 +506,11 @@
                     });
                 }
             }
-            if (users.length === 0) throw new Error('No hay usuarios');
+            if (users.length === 0) throw new Error('No se encontraron usuarios en el CSV');
             return users;
         } catch (error) {
-            console.warn('Usando usuarios demo por error:', error);
-            return DEMO_USERS;
+            console.error('Error cargando CSV:', error.message);
+            throw new Error(`Error al cargar usuarios: ${error.message}`);
         }
     }
 
@@ -530,18 +526,24 @@
 
     // Iniciar sesión
     async function login(cedula, password) {
-        const user = await authenticate(cedula, password);
-        if (user) {
-            currentUser = user;
-            localStorage.setItem('pagoMovilUser', JSON.stringify(user));
-            loginModal.classList.add('hidden');
-            appContent.classList.remove('hidden');
-            userFullNameSpan.textContent = currentUser.nombreCompleto;
-            userCedulaSpan.textContent = currentUser.cedula;
-            showToast(`✅ Bienvenido, ${currentUser.nombreCompleto}`);
-            return true;
-        } else {
-            loginError.textContent = 'Cédula o contraseña incorrecta';
+        loginError.textContent = '';
+        try {
+            const user = await authenticate(cedula, password);
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('pagoMovilUser', JSON.stringify(user));
+                loginModal.classList.add('hidden');
+                appContent.classList.remove('hidden');
+                userFullNameSpan.textContent = currentUser.nombreCompleto;
+                userCedulaSpan.textContent = currentUser.cedula;
+                showToast(`✅ Bienvenido, ${currentUser.nombreCompleto}`);
+                return true;
+            } else {
+                loginError.textContent = 'Cédula o contraseña incorrecta';
+                return false;
+            }
+        } catch (err) {
+            loginError.textContent = err.message;
             return false;
         }
     }
@@ -569,7 +571,7 @@
         if (stored) {
             try {
                 const user = JSON.parse(stored);
-                // Validar que siga existiendo en el CSV (opcional pero evita usar credenciales inválidas)
+                // Validar que el usuario siga existiendo en el CSV
                 const users = await loadUsersFromCSV();
                 const valid = users.some(u => u.cedula === user.cedula);
                 if (valid) {
@@ -579,15 +581,21 @@
                     userFullNameSpan.textContent = currentUser.nombreCompleto;
                     userCedulaSpan.textContent = currentUser.cedula;
                     return;
+                } else {
+                    // Usuario ya no está en el CSV, forzar logout
+                    logout();
                 }
-            } catch(e) {}
+            } catch(e) {
+                // Si hay error al cargar CSV, no se puede validar, mejor pedir login de nuevo
+                logout();
+            }
+        } else {
+            loginModal.classList.remove('hidden');
+            appContent.classList.add('hidden');
         }
-        // Si no hay sesión válida, mostrar login
-        loginModal.classList.remove('hidden');
-        appContent.classList.add('hidden');
     }
 
-    // ---------- OCR Y EXTRACCIÓN (igual que antes pero adaptado) ----------
+    // ---------- OCR Y EXTRACCIÓN (funciones ya existentes) ----------
     function updateDataTable() {
         document.getElementById('field-nombre').innerHTML = (currentExtractedData.nombre || '—') + '<span style="font-size:0.7rem; margin-left:6px;">✏️</span>';
         document.getElementById('field-telefono').innerHTML = (currentExtractedData.telefono || '—') + '✏️';
@@ -720,7 +728,6 @@
             currentExtractedData.cedulaBeneficiario || '',
             currentExtractedData.telefonoPago || ''
         ];
-        // Añadir la cédula del usuario que capturó los datos en la última columna
         baseRow.push(currentUser ? currentUser.cedula : '');
         return baseRow.join('\t');
     }
