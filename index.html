@@ -186,6 +186,10 @@
             font-family: monospace;
             cursor: pointer;
             word-break: break-word;
+            position: relative;
+        }
+        .data-table td:last-child:hover {
+            background-color: #fef9e3;
         }
 
         .btn-group {
@@ -383,22 +387,22 @@
             <div class="card-body">
                 <div class="data-table-container">
                     <table class="data-table" id="dataTable">
-                        <tr><td><strong>📅 FECHA VALIDACIÓN</strong></td><td id="field-fecha_validacion">—</td></tr>
-                        <tr><td><strong>✅ VALIDADOR</strong></td><td id="field-validador">—</td></tr>
-                        <tr><td><strong>📊 ESTATUS</strong></td><td id="field-estatus">—</td></tr>
-                        <tr><td><strong>📄 FOLIO SIAC</strong></td><td id="field-folio_siac">—</td></tr>
-                        <tr><td><strong>🏷️ TIPO DE VENTA</strong></td><td id="field-tipo_venta">—</td></tr>
-                        <tr><td><strong>🎯 ESTRATEGIA</strong></td><td id="field-estrategia">—</td></tr>
-                        <tr><td><strong>👥 GERENTES</strong></td><td id="field-gerentes">—</td></tr>
-                        <tr><td><strong>🔑 CLAVE DE PROMOTOR</strong></td><td id="field-clave_promotor">—</td></tr>
-                        <tr><td><strong>🧑 NOMBRE DEL CLIENTE</strong></td><td id="field-nombre_cliente">—</td></tr>
-                        <tr><td><strong>📱 CELULAR CLIENTE</strong></td><td id="field-celular_cliente">—</td></tr>
-                        <tr><td><strong>📞 CELULAR REFERENCIA</strong></td><td id="field-celular_referencia">—</td></tr>
-                        <tr><td><strong>📦 PAQUETE</strong></td><td id="field-paquete">—</td></tr>
-                        <tr><td><strong>💰 COSTO DEL PAQUETE</strong></td><td id="field-costo_paquete">—</td></tr>
-                        <tr><td><strong>📝 OBSERVACIÓN</strong></td><td id="field-observacion">—</td></tr>
-                        <tr><td><strong>⏰ HORA</strong></td><td id="field-hora">—</td></tr>
-                        <tr><td><strong>⏱️ DURACIÓN DE LLAMADA</strong></td><td id="field-duracion_llamada">—</td></tr>
+                         <tr><td><strong>📅 FECHA VALIDACIÓN</strong></td><td id="field-fecha_validacion">—</td></tr>
+                         <tr><td><strong>✅ VALIDADOR</strong></td><td id="field-validador">—</td></tr>
+                         <tr><td><strong>📊 ESTATUS</strong></td><td id="field-estatus">—</td></tr>
+                         <tr><td><strong>📄 FOLIO SIAC</strong></td><td id="field-folio_siac">—</td></tr>
+                         <tr><td><strong>🏷️ TIPO DE VENTA</strong></td><td id="field-tipo_venta">—</td></tr>
+                         <tr><td><strong>🎯 ESTRATEGIA</strong></td><td id="field-estrategia">—</td></tr>
+                         <tr><td><strong>👥 GERENTES</strong></td><td id="field-gerentes">—</td></tr>
+                         <tr><td><strong>🔑 CLAVE DE PROMOTOR</strong></td><td id="field-clave_promotor">—</td></tr>
+                         <tr><td><strong>🧑 NOMBRE DEL CLIENTE</strong></td><td id="field-nombre_cliente">—</td></tr>
+                         <tr><td><strong>📱 CELULAR CLIENTE</strong></td><td id="field-celular_cliente">—</td></tr>
+                         <tr><td><strong>📞 CELULAR REFERENCIA</strong></td><td id="field-celular_referencia">—</td></tr>
+                         <tr><td><strong>📦 PAQUETE</strong></td><td id="field-paquete">—</td></tr>
+                         <tr><td><strong>💰 COSTO DEL PAQUETE</strong></td><td id="field-costo_paquete">—</td></tr>
+                         <tr><td><strong>📝 OBSERVACIÓN</strong></td><td id="field-observacion">—</td></tr>
+                         <tr><td><strong>⏰ HORA</strong></td><td id="field-hora">—</td></tr>
+                         <tr><td><strong>⏱️ DURACIÓN DE LLAMADA</strong></td><td id="field-duracion_llamada">—</td></tr>
                     </table>
                 </div>
 
@@ -556,46 +560,88 @@
         }
     }
 
-    // Hacer editable cada campo
+    // ---------- FUNCIÓN DE EDICIÓN CORREGIDA ----------
     function makeEditable() {
         const fields = Object.keys(currentExtractedData);
         fields.forEach(key => {
-            const el = document.getElementById(`field-${key}`);
-            if (!el) return;
-            el.style.cursor = 'pointer';
-            el.addEventListener('dblclick', function() {
-                const currentVal = currentExtractedData[key] || '';
+            const cell = document.getElementById(`field-${key}`);
+            if (!cell) return;
+            
+            // Eliminar eventos previos para evitar duplicados (opcional, pero seguro)
+            const newCell = cell.cloneNode(true);
+            cell.parentNode.replaceChild(newCell, cell);
+            
+            const finalCell = newCell;
+            finalCell.style.cursor = 'pointer';
+            finalCell.title = 'Doble clic para editar';
+            
+            finalCell.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                const currentValue = currentExtractedData[key] || '';
+                const originalContent = finalCell.innerHTML;
+                
+                // Crear input
                 const input = document.createElement('input');
-                input.value = currentVal;
+                input.type = 'text';
+                input.value = currentValue;
                 input.style.width = '95%';
-                input.style.padding = '4px';
+                input.style.padding = '6px 8px';
                 input.style.border = '2px solid #10b981';
                 input.style.borderRadius = '8px';
-                const parent = this.parentNode;
-                const original = this;
-                parent.replaceChild(input, this);
+                input.style.fontFamily = 'monospace';
+                input.style.fontSize = '0.9rem';
+                input.style.backgroundColor = '#ffffff';
+                
+                // Reemplazar contenido
+                finalCell.innerHTML = '';
+                finalCell.appendChild(input);
                 input.focus();
-                function save() {
-                    currentExtractedData[key] = input.value.trim();
-                    updateDataTable();
-                    parent.replaceChild(original, input);
-                }
-                input.addEventListener('blur', save);
-                input.addEventListener('keypress', e => { if(e.key === 'Enter') save(); });
+                input.select();
+                
+                // Guardar cambios
+                const saveEdit = () => {
+                    const newValue = input.value.trim();
+                    if (newValue !== currentExtractedData[key]) {
+                        currentExtractedData[key] = newValue;
+                        updateDataTable();
+                        showToast(`✅ "${key}" actualizado`, 1200);
+                    } else {
+                        // Restaurar sin cambios
+                        finalCell.innerHTML = originalContent;
+                    }
+                    // Remover listeners para evitar fugas
+                    input.removeEventListener('blur', saveEdit);
+                    input.removeEventListener('keypress', keyHandler);
+                };
+                
+                const cancelEdit = () => {
+                    finalCell.innerHTML = originalContent;
+                    input.removeEventListener('blur', saveEdit);
+                    input.removeEventListener('keypress', keyHandler);
+                };
+                
+                const keyHandler = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        saveEdit();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        cancelEdit();
+                    }
+                };
+                
+                input.addEventListener('blur', saveEdit);
+                input.addEventListener('keypress', keyHandler);
             });
         });
     }
 
-    // ---------- NUEVA FUNCIÓN DE EXTRACCIÓN MEJORADA ----------
-    // Esta función extrae datos del formato donde los valores aparecen después de las etiquetas
-    // Ejemplo: "NOMBRE DEL CLIENTE MARIA ELIZABETH ZAMORA BENAVIDES"
+    // ---------- EXTRACCIÓN DE DATOS MEJORADA ----------
     function extractDataFromOCR(text) {
         const data = { ...currentExtractedData };
         
-        // Limpiar texto: reemplazar saltos de línea y múltiples espacios
         const cleanText = text.replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
         
-        // Lista de campos a buscar con sus variantes
         const fieldPatterns = [
             { key: 'fecha_validacion', patterns: ['FECHA VALIDACIÓN', 'FECHA DE VALIDACIÓN', 'FECHA VALIDACION'] },
             { key: 'validador', patterns: ['VALIDADOR'] },
@@ -615,15 +661,13 @@
             { key: 'duracion_llamada', patterns: ['DURACIÓN DE LLAMADA', 'DURACION LLAMADA', 'DURACIÓN'] }
         ];
         
-        // Método 1: Buscar patrón "CAMPO VALOR" donde el valor está en la misma línea o siguiente
+        // Búsqueda por patrón en línea
         for (const field of fieldPatterns) {
             for (const pattern of field.patterns) {
-                // Buscar el patrón seguido de espacio y luego texto hasta el siguiente campo o salto de línea
                 const regex = new RegExp(`${pattern}\\s+([^\\n\\r]{1,100})(?=\\s*(?:${fieldPatterns.map(f => f.patterns.join('|')).join('|')}|$))`, 'i');
                 const match = text.match(regex);
                 if (match && match[1] && match[1].trim()) {
                     let value = match[1].trim();
-                    // Limpiar valores que contengan otros campos
                     for (const otherField of fieldPatterns) {
                         for (const otherPattern of otherField.patterns) {
                             if (value.toUpperCase().includes(otherPattern.toUpperCase()) && otherPattern !== pattern) {
@@ -632,77 +676,57 @@
                             }
                         }
                     }
-                    if (value && !value.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) && field.key !== 'fecha_validacion') {
-                        // Si no es una fecha, tomar el valor
-                        data[field.key] = value;
-                    } else if (value && field.key === 'fecha_validacion') {
-                        data[field.key] = value;
-                    } else if (value && !data[field.key]) {
-                        data[field.key] = value;
-                    }
+                    if (value && !data[field.key]) data[field.key] = value;
                     break;
                 }
             }
         }
         
-        // Método 2: Búsqueda más flexible por líneas (para el formato que muestra la imagen)
+        // Búsqueda por líneas
         const lines = text.split(/\r?\n/);
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
             
-            // Detectar NOMBRE DEL CLIENTE
-            if (line.toUpperCase().includes('NOMBRE DEL CLIENTE') || line.toUpperCase().includes('NOMBRE CLIENTE')) {
+            if ((line.toUpperCase().includes('NOMBRE DEL CLIENTE') || line.toUpperCase().includes('NOMBRE CLIENTE')) && !data.nombre_cliente) {
                 const match = line.match(/(?:NOMBRE\s*DEL\s*CLIENTE|NOMBRE\s*CLIENTE)\s*(.+)$/i);
                 if (match && match[1]) data.nombre_cliente = match[1].trim();
                 else if (i+1 < lines.length && lines[i+1].trim() && !lines[i+1].match(/[A-Z\s]{5,}/)) 
                     data.nombre_cliente = lines[i+1].trim();
             }
             
-            // Detectar CELULAR CLIENTE
-            if (line.toUpperCase().includes('CELULAR CLIENTE')) {
+            if ((line.toUpperCase().includes('CELULAR CLIENTE')) && !data.celular_cliente) {
                 const match = line.match(/(?:CELULAR\s*CLIENTE)\s*(.+)$/i);
                 if (match && match[1]) data.celular_cliente = match[1].trim();
                 else if (i+1 < lines.length && lines[i+1].trim().match(/^\d{7,15}/))
                     data.celular_cliente = lines[i+1].trim();
             }
             
-            // Detectar CELULAR REFERENCIA
-            if (line.toUpperCase().includes('CELULAR REFERENCIA')) {
-                const match = line.match(/(?:CELULAR\s*REFERENCIA)\s*(.+)$/i);
-                if (match && match[1]) data.celular_referencia = match[1].trim();
-                else if (i+1 < lines.length && lines[i+1].trim() && !lines[i+1].match(/[A-Z\s]{5,}/))
-                    data.celular_referencia = lines[i+1].trim();
-            }
-            
-            // Detectar CLAVE DE PROMOTOR
-            if (line.toUpperCase().includes('CLAVE DE PROMOTOR') || line.toUpperCase().includes('CLAVE PROMOTOR')) {
+            if ((line.toUpperCase().includes('CLAVE DE PROMOTOR') || line.toUpperCase().includes('CLAVE PROMOTOR')) && !data.clave_promotor) {
                 const match = line.match(/(?:CLAVE\s*DE\s*PROMOTOR|CLAVE\s*PROMOTOR)\s*(.+)$/i);
                 if (match && match[1]) data.clave_promotor = match[1].trim();
                 else if (i+1 < lines.length && lines[i+1].trim().match(/^\d{4,10}/))
                     data.clave_promotor = lines[i+1].trim();
             }
             
-            // Detectar DURACIÓN DE LLAMADA
-            if (line.toUpperCase().includes('DURACIÓN DE LLAMADA') || line.toUpperCase().includes('DURACION LLAMADA')) {
+            if ((line.toUpperCase().includes('DURACIÓN DE LLAMADA') || line.toUpperCase().includes('DURACION LLAMADA')) && !data.duracion_llamada) {
                 const match = line.match(/(?:DURACIÓN\s*DE\s*LLAMADA|DURACION\s*LLAMADA)\s*(.+)$/i);
                 if (match && match[1]) data.duracion_llamada = match[1].trim();
                 else if (i+1 < lines.length && lines[i+1].trim().match(/^\d{1,2}:\d{2}:\d{2}/))
                     data.duracion_llamada = lines[i+1].trim();
             }
             
-            // Detectar FECHA VALIDACIÓN (formato dd/mm/aaaa)
             if ((line.toUpperCase().includes('FECHA VALIDACIÓN') || line.toUpperCase().includes('FECHA VALIDACION')) && !data.fecha_validacion) {
-                const match = line.match(/(?:\d{1,2}\/\d{1,2}\/\d{4})/);
-                if (match) data.fecha_validacion = match[0];
+                const dateMatch = line.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                if (dateMatch) data.fecha_validacion = dateMatch[0];
                 else if (i+1 < lines.length) {
-                    const dateMatch = lines[i+1].match(/\d{1,2}\/\d{1,2}\/\d{4}/);
-                    if (dateMatch) data.fecha_validacion = dateMatch[0];
+                    const nextDate = lines[i+1].match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                    if (nextDate) data.fecha_validacion = nextDate[0];
                 }
             }
         }
         
-        // Método 3: Buscar patrones específicos con números (teléfonos, códigos)
+        // Extracción numérica adicional
         const phoneMatch = text.match(/\b(3|4)\d{9}\b/);
         if (phoneMatch && !data.celular_cliente) data.celular_cliente = phoneMatch[0];
         
@@ -714,13 +738,6 @@
         
         const fechaMatch = text.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
         if (fechaMatch && !data.fecha_validacion) data.fecha_validacion = fechaMatch[0];
-        
-        // Limpiar valores
-        for (let key in data) {
-            if (data[key] && (data[key].toLowerCase().includes('http') || data[key].toLowerCase().includes('www'))) {
-                data[key] = '';
-            }
-        }
         
         return data;
     }
@@ -745,19 +762,15 @@
             progressFill.style.width = '100%';
             ocrStatus.textContent = '✅ OCR completado';
             
-            // Mostrar texto extraído para depuración
             rawTextDiv.textContent = text;
             ocrRawContainer.style.display = 'block';
-            
-            console.log('Texto OCR:', text);
             
             const extracted = extractDataFromOCR(text);
             currentExtractedData = extracted;
             updateDataTable();
             
-            // Mostrar qué datos se extrajeron
-            const extractedFields = Object.entries(extracted).filter(([k,v]) => v && v !== '').length;
-            showToast(`✅ Extraídos ${extractedFields} campos de datos`);
+            const extractedCount = Object.values(extracted).filter(v => v && v !== '').length;
+            showToast(`✅ Extraídos ${extractedCount} campos de datos`);
         } catch(e) {
             console.error(e);
             ocrStatus.textContent = '❌ Error en OCR';
