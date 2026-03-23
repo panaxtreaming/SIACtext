@@ -123,6 +123,10 @@
             margin: 0.5rem;
         }
 
+        .btn-capture:hover {
+            transform: translateY(-2px);
+        }
+
         .captured-image {
             max-width: 100%;
             max-height: 350px;
@@ -154,7 +158,6 @@
             transition: width 0.3s;
         }
 
-        /* Tabla de datos (ahora con scroll horizontal para muchos campos) */
         .data-table-container {
             overflow-x: auto;
             max-height: 500px;
@@ -167,6 +170,9 @@
         }
         .data-table tr {
             border-bottom: 1px solid #e2e8f0;
+        }
+        .data-table tr:hover {
+            background: #f8fafc;
         }
         .data-table td {
             padding: 0.6rem 0.5rem;
@@ -219,6 +225,10 @@
             border: 2px solid #cbd5e1;
             color: #475569;
         }
+        .btn-outline:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
 
         .modal {
             position: fixed;
@@ -245,11 +255,17 @@
         .input-group {
             margin-bottom: 1.2rem;
         }
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
         .input-group input {
             width: 100%;
             padding: 0.8rem;
             border: 2px solid #e2e8f0;
             border-radius: 1rem;
+            font-size: 1rem;
         }
         .btn-login {
             width: 100%;
@@ -259,6 +275,8 @@
             border-radius: 2rem;
             font-weight: bold;
             cursor: pointer;
+            border: none;
+            font-size: 1rem;
         }
         .error-msg {
             color: #dc2626;
@@ -294,6 +312,16 @@
             font-size: 0.8rem;
             margin-top: 1rem;
         }
+        .ocr-raw-text {
+            background: #f1f5f9;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            font-size: 0.7rem;
+            max-height: 150px;
+            overflow: auto;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -301,7 +329,7 @@
 <!-- Modal de inicio de sesión -->
 <div id="loginModal" class="modal">
     <div class="modal-card">
-        <h2>🔐 Acceso</h2>
+        <h2 style="text-align:center;">🔐 Acceso</h2>
         <div class="input-group">
             <label>📇 Cédula</label>
             <input type="text" id="loginCedula" placeholder="Número de cédula">
@@ -342,9 +370,9 @@
                     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
                     <div id="ocrStatus"></div>
                 </div>
-                <div id="ocrRawContainer" style="display:none; margin-top:1rem; background:#f1f5f9; padding:0.75rem; border-radius:0.75rem; font-size:0.7rem; max-height:150px; overflow:auto;">
-                    <strong>📄 Texto extraído:</strong>
-                    <div id="rawText" style="white-space:pre-wrap;"></div>
+                <div id="ocrRawContainer" style="display:none; margin-top:1rem;">
+                    <strong>📄 Texto extraído por OCR:</strong>
+                    <div id="rawText" class="ocr-raw-text"></div>
                 </div>
             </div>
         </div>
@@ -355,22 +383,22 @@
             <div class="card-body">
                 <div class="data-table-container">
                     <table class="data-table" id="dataTable">
-                        <tr><td>📅 FECHA VALIDACIÓN</td><td id="field-fecha_validacion">—</td></tr>
-                        <tr><td>✅ VALIDADOR</td><td id="field-validador">—</td></tr>
-                        <tr><td>📊 ESTATUS</td><td id="field-estatus">—</td></tr>
-                        <tr><td>📄 FOLIO SIAC</td><td id="field-folio_siac">—</td></tr>
-                        <tr><td>🏷️ TIPO DE VENTA</td><td id="field-tipo_venta">—</td></tr>
-                        <tr><td>🎯 ESTRATEGIA</td><td id="field-estrategia">—</td></tr>
-                        <tr><td>👥 GERENTES</td><td id="field-gerentes">—</td></tr>
-                        <tr><td>🔑 CLAVE DE PROMOTOR</td><td id="field-clave_promotor">—</td></tr>
-                        <tr><td>🧑 NOMBRE DEL CLIENTE</td><td id="field-nombre_cliente">—</td></tr>
-                        <tr><td>📱 CELULAR CLIENTE</td><td id="field-celular_cliente">—</td></tr>
-                        <tr><td>📞 CELULAR REFERENCIA</td><td id="field-celular_referencia">—</td></tr>
-                        <tr><td>📦 PAQUETE</td><td id="field-paquete">—</td></tr>
-                        <tr><td>💰 COSTO DEL PAQUETE</td><td id="field-costo_paquete">—</td></tr>
-                        <tr><td>📝 OBSERVACIÓN</td><td id="field-observacion">—</td></tr>
-                        <tr><td>⏰ HORA</td><td id="field-hora">—</td></tr>
-                        <tr><td>⏱️ DURACIÓN DE LLAMADA</td><td id="field-duracion_llamada">—</td></tr>
+                        <tr><td><strong>📅 FECHA VALIDACIÓN</strong></td><td id="field-fecha_validacion">—</td></tr>
+                        <tr><td><strong>✅ VALIDADOR</strong></td><td id="field-validador">—</td></tr>
+                        <tr><td><strong>📊 ESTATUS</strong></td><td id="field-estatus">—</td></tr>
+                        <tr><td><strong>📄 FOLIO SIAC</strong></td><td id="field-folio_siac">—</td></tr>
+                        <tr><td><strong>🏷️ TIPO DE VENTA</strong></td><td id="field-tipo_venta">—</td></tr>
+                        <tr><td><strong>🎯 ESTRATEGIA</strong></td><td id="field-estrategia">—</td></tr>
+                        <tr><td><strong>👥 GERENTES</strong></td><td id="field-gerentes">—</td></tr>
+                        <tr><td><strong>🔑 CLAVE DE PROMOTOR</strong></td><td id="field-clave_promotor">—</td></tr>
+                        <tr><td><strong>🧑 NOMBRE DEL CLIENTE</strong></td><td id="field-nombre_cliente">—</td></tr>
+                        <tr><td><strong>📱 CELULAR CLIENTE</strong></td><td id="field-celular_cliente">—</td></tr>
+                        <tr><td><strong>📞 CELULAR REFERENCIA</strong></td><td id="field-celular_referencia">—</td></tr>
+                        <tr><td><strong>📦 PAQUETE</strong></td><td id="field-paquete">—</td></tr>
+                        <tr><td><strong>💰 COSTO DEL PAQUETE</strong></td><td id="field-costo_paquete">—</td></tr>
+                        <tr><td><strong>📝 OBSERVACIÓN</strong></td><td id="field-observacion">—</td></tr>
+                        <tr><td><strong>⏰ HORA</strong></td><td id="field-hora">—</td></tr>
+                        <tr><td><strong>⏱️ DURACIÓN DE LLAMADA</strong></td><td id="field-duracion_llamada">—</td></tr>
                     </table>
                 </div>
 
@@ -392,7 +420,8 @@
 
 <script>
     // ---------- CONFIGURACIÓN ----------
-    const USERS_CSV_URL = 'https://raw.githubusercontent.com/panaxtreaming/SIACtext/main/usuarios.csv'; // CAMBIAR A TU URL REAL
+    // Reemplazar con la URL real de tu CSV en GitHub
+    const USERS_CSV_URL = 'https://raw.githubusercontent.com/panaxtreaming/SIACtext/main/usuarios.csv';
 
     let currentUser = null;
     let currentExtractedData = {
@@ -423,32 +452,37 @@
         setTimeout(() => toast.classList.remove('show'), duration);
     }
 
-    // Cargar usuarios desde CSV (sin demo)
+    // Cargar usuarios desde CSV
     async function loadUsersFromCSV() {
-        const response = await fetch(USERS_CSV_URL);
-        if (!response.ok) throw new Error(`No se pudo cargar CSV (${response.status})`);
-        const csvText = await response.text();
-        if (!csvText.trim()) throw new Error('CSV vacío');
-        const lines = csvText.split(/\r?\n/).filter(l => l.trim());
-        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-        const cedulaIdx = headers.findIndex(h => h.includes('cedula'));
-        const nombreIdx = headers.findIndex(h => h.includes('nombre'));
-        const passIdx = headers.findIndex(h => h.includes('contraseña') || h.includes('password'));
-        if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1)
-            throw new Error(`Formato CSV inválido. Encabezados: ${headers.join(', ')}`);
-        const users = [];
-        for (let i=1; i<lines.length; i++) {
-            const cols = lines[i].split(',').map(c => c.trim());
-            if (cols.length > Math.max(cedulaIdx, nombreIdx, passIdx)) {
-                users.push({
-                    cedula: cols[cedulaIdx],
-                    nombreCompleto: cols[nombreIdx],
-                    password: cols[passIdx]
-                });
+        try {
+            const response = await fetch(USERS_CSV_URL);
+            if (!response.ok) throw new Error(`No se pudo cargar CSV (${response.status})`);
+            const csvText = await response.text();
+            if (!csvText.trim()) throw new Error('CSV vacío');
+            const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+            const cedulaIdx = headers.findIndex(h => h.includes('cedula'));
+            const nombreIdx = headers.findIndex(h => h.includes('nombre'));
+            const passIdx = headers.findIndex(h => h.includes('contraseña') || h.includes('password'));
+            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1)
+                throw new Error(`Formato CSV inválido. Encabezados: ${headers.join(', ')}`);
+            const users = [];
+            for (let i=1; i<lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                if (cols.length > Math.max(cedulaIdx, nombreIdx, passIdx)) {
+                    users.push({
+                        cedula: cols[cedulaIdx],
+                        nombreCompleto: cols[nombreIdx],
+                        password: cols[passIdx]
+                    });
+                }
             }
+            if (!users.length) throw new Error('No hay usuarios en CSV');
+            return users;
+        } catch (error) {
+            console.error('Error cargando CSV:', error);
+            throw error;
         }
-        if (!users.length) throw new Error('No hay usuarios en CSV');
-        return users;
     }
 
     async function authenticate(cedula, password) {
@@ -503,7 +537,9 @@
                     userCedulaSpan.textContent = currentUser.cedula;
                     return;
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.log('Error en sesión:', e);
+            }
         }
         loginModal.classList.remove('hidden');
         appContent.classList.add('hidden');
@@ -513,7 +549,10 @@
     function updateDataTable() {
         for (let key in currentExtractedData) {
             const cell = document.getElementById(`field-${key}`);
-            if (cell) cell.innerHTML = (currentExtractedData[key] || '—') + '<span style="font-size:0.7rem; margin-left:6px;">✏️</span>';
+            if (cell) {
+                const value = currentExtractedData[key] || '—';
+                cell.innerHTML = value + '<span style="font-size:0.7rem; margin-left:6px;">✏️</span>';
+            }
         }
     }
 
@@ -547,37 +586,142 @@
         });
     }
 
-    // ---------- EXTRACCIÓN DE DATOS DE LA IMAGEN (según el modelo dado) ----------
+    // ---------- NUEVA FUNCIÓN DE EXTRACCIÓN MEJORADA ----------
+    // Esta función extrae datos del formato donde los valores aparecen después de las etiquetas
+    // Ejemplo: "NOMBRE DEL CLIENTE MARIA ELIZABETH ZAMORA BENAVIDES"
     function extractDataFromOCR(text) {
-        const data = { ...currentExtractedData }; // inicializar vacío
-        // Función auxiliar para buscar valor después de una etiqueta
-        function getValueAfter(label) {
-            const regex = new RegExp(`${label}\\s*[:|]\\s*([^\\n\\r]{1,80})`, 'i');
-            const match = text.match(regex);
-            return match ? match[1].trim() : '';
+        const data = { ...currentExtractedData };
+        
+        // Limpiar texto: reemplazar saltos de línea y múltiples espacios
+        const cleanText = text.replace(/\r\n/g, '\n').replace(/\s+/g, ' ');
+        
+        // Lista de campos a buscar con sus variantes
+        const fieldPatterns = [
+            { key: 'fecha_validacion', patterns: ['FECHA VALIDACIÓN', 'FECHA DE VALIDACIÓN', 'FECHA VALIDACION'] },
+            { key: 'validador', patterns: ['VALIDADOR'] },
+            { key: 'estatus', patterns: ['ESTATUS', 'STATUS'] },
+            { key: 'folio_siac', patterns: ['FOLIO SIAC', 'FOLIO'] },
+            { key: 'tipo_venta', patterns: ['TIPO DE VENTA', 'TIPO VENTA'] },
+            { key: 'estrategia', patterns: ['ESTRATEGIA'] },
+            { key: 'gerentes', patterns: ['GERENTES'] },
+            { key: 'clave_promotor', patterns: ['CLAVE DE PROMOTOR', 'CLAVE PROMOTOR', 'PROMOTOR'] },
+            { key: 'nombre_cliente', patterns: ['NOMBRE DEL CLIENTE', 'NOMBRE CLIENTE', 'CLIENTE'] },
+            { key: 'celular_cliente', patterns: ['CELULAR CLIENTE', 'TELÉFONO CLIENTE', 'CELULAR'] },
+            { key: 'celular_referencia', patterns: ['CELULAR REFERENCIA', 'TELÉFONO REFERENCIA', 'REFERENCIA'] },
+            { key: 'paquete', patterns: ['PAQUETE'] },
+            { key: 'costo_paquete', patterns: ['COSTO DEL PAQUETE', 'COSTO PAQUETE', 'COSTO'] },
+            { key: 'observacion', patterns: ['OBSERVACIÓN', 'OBSERVACION'] },
+            { key: 'hora', patterns: ['HORA'] },
+            { key: 'duracion_llamada', patterns: ['DURACIÓN DE LLAMADA', 'DURACION LLAMADA', 'DURACIÓN'] }
+        ];
+        
+        // Método 1: Buscar patrón "CAMPO VALOR" donde el valor está en la misma línea o siguiente
+        for (const field of fieldPatterns) {
+            for (const pattern of field.patterns) {
+                // Buscar el patrón seguido de espacio y luego texto hasta el siguiente campo o salto de línea
+                const regex = new RegExp(`${pattern}\\s+([^\\n\\r]{1,100})(?=\\s*(?:${fieldPatterns.map(f => f.patterns.join('|')).join('|')}|$))`, 'i');
+                const match = text.match(regex);
+                if (match && match[1] && match[1].trim()) {
+                    let value = match[1].trim();
+                    // Limpiar valores que contengan otros campos
+                    for (const otherField of fieldPatterns) {
+                        for (const otherPattern of otherField.patterns) {
+                            if (value.toUpperCase().includes(otherPattern.toUpperCase()) && otherPattern !== pattern) {
+                                value = value.substring(0, value.toUpperCase().indexOf(otherPattern.toUpperCase())).trim();
+                                break;
+                            }
+                        }
+                    }
+                    if (value && !value.match(/^\d{1,2}\/\d{1,2}\/\d{4}/) && field.key !== 'fecha_validacion') {
+                        // Si no es una fecha, tomar el valor
+                        data[field.key] = value;
+                    } else if (value && field.key === 'fecha_validacion') {
+                        data[field.key] = value;
+                    } else if (value && !data[field.key]) {
+                        data[field.key] = value;
+                    }
+                    break;
+                }
+            }
         }
-
-        data.fecha_validacion = getValueAfter('FECHA VALIDACIÓN');
-        data.validador = getValueAfter('VALIDADOR');
-        data.estatus = getValueAfter('ESTATUS');
-        data.folio_siac = getValueAfter('FOLIO SIAC');
-        data.tipo_venta = getValueAfter('TIPO DE VENTA');
-        data.estrategia = getValueAfter('ESTRATEGIA');
-        data.gerentes = getValueAfter('GERENTES');
-        data.clave_promotor = getValueAfter('CLAVE DE PROMOTOR');
-        data.nombre_cliente = getValueAfter('NOMBRE DEL CLIENTE');
-        data.celular_cliente = getValueAfter('CELULAR CLIENTE');
-        data.celular_referencia = getValueAfter('CELULAR REFERENCIA');
-        data.paquete = getValueAfter('PAQUETE');
-        data.costo_paquete = getValueAfter('COSTO DEL PAQUETE');
-        data.observacion = getValueAfter('OBSERVACIÓN');
-        data.hora = getValueAfter('HORA');
-        data.duracion_llamada = getValueAfter('DURACIÓN DE LLAMADA');
-
-        // Limpieza básica
-        for (let k in data) {
-            if (data[k] === '') data[k] = '';
+        
+        // Método 2: Búsqueda más flexible por líneas (para el formato que muestra la imagen)
+        const lines = text.split(/\r?\n/);
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            // Detectar NOMBRE DEL CLIENTE
+            if (line.toUpperCase().includes('NOMBRE DEL CLIENTE') || line.toUpperCase().includes('NOMBRE CLIENTE')) {
+                const match = line.match(/(?:NOMBRE\s*DEL\s*CLIENTE|NOMBRE\s*CLIENTE)\s*(.+)$/i);
+                if (match && match[1]) data.nombre_cliente = match[1].trim();
+                else if (i+1 < lines.length && lines[i+1].trim() && !lines[i+1].match(/[A-Z\s]{5,}/)) 
+                    data.nombre_cliente = lines[i+1].trim();
+            }
+            
+            // Detectar CELULAR CLIENTE
+            if (line.toUpperCase().includes('CELULAR CLIENTE')) {
+                const match = line.match(/(?:CELULAR\s*CLIENTE)\s*(.+)$/i);
+                if (match && match[1]) data.celular_cliente = match[1].trim();
+                else if (i+1 < lines.length && lines[i+1].trim().match(/^\d{7,15}/))
+                    data.celular_cliente = lines[i+1].trim();
+            }
+            
+            // Detectar CELULAR REFERENCIA
+            if (line.toUpperCase().includes('CELULAR REFERENCIA')) {
+                const match = line.match(/(?:CELULAR\s*REFERENCIA)\s*(.+)$/i);
+                if (match && match[1]) data.celular_referencia = match[1].trim();
+                else if (i+1 < lines.length && lines[i+1].trim() && !lines[i+1].match(/[A-Z\s]{5,}/))
+                    data.celular_referencia = lines[i+1].trim();
+            }
+            
+            // Detectar CLAVE DE PROMOTOR
+            if (line.toUpperCase().includes('CLAVE DE PROMOTOR') || line.toUpperCase().includes('CLAVE PROMOTOR')) {
+                const match = line.match(/(?:CLAVE\s*DE\s*PROMOTOR|CLAVE\s*PROMOTOR)\s*(.+)$/i);
+                if (match && match[1]) data.clave_promotor = match[1].trim();
+                else if (i+1 < lines.length && lines[i+1].trim().match(/^\d{4,10}/))
+                    data.clave_promotor = lines[i+1].trim();
+            }
+            
+            // Detectar DURACIÓN DE LLAMADA
+            if (line.toUpperCase().includes('DURACIÓN DE LLAMADA') || line.toUpperCase().includes('DURACION LLAMADA')) {
+                const match = line.match(/(?:DURACIÓN\s*DE\s*LLAMADA|DURACION\s*LLAMADA)\s*(.+)$/i);
+                if (match && match[1]) data.duracion_llamada = match[1].trim();
+                else if (i+1 < lines.length && lines[i+1].trim().match(/^\d{1,2}:\d{2}:\d{2}/))
+                    data.duracion_llamada = lines[i+1].trim();
+            }
+            
+            // Detectar FECHA VALIDACIÓN (formato dd/mm/aaaa)
+            if ((line.toUpperCase().includes('FECHA VALIDACIÓN') || line.toUpperCase().includes('FECHA VALIDACION')) && !data.fecha_validacion) {
+                const match = line.match(/(?:\d{1,2}\/\d{1,2}\/\d{4})/);
+                if (match) data.fecha_validacion = match[0];
+                else if (i+1 < lines.length) {
+                    const dateMatch = lines[i+1].match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+                    if (dateMatch) data.fecha_validacion = dateMatch[0];
+                }
+            }
         }
+        
+        // Método 3: Buscar patrones específicos con números (teléfonos, códigos)
+        const phoneMatch = text.match(/\b(3|4)\d{9}\b/);
+        if (phoneMatch && !data.celular_cliente) data.celular_cliente = phoneMatch[0];
+        
+        const claveMatch = text.match(/\b\d{6}\b/);
+        if (claveMatch && !data.clave_promotor && claveMatch[0].length === 6) data.clave_promotor = claveMatch[0];
+        
+        const duracionMatch = text.match(/\d{1,2}:\d{2}:\d{2}/);
+        if (duracionMatch && !data.duracion_llamada) data.duracion_llamada = duracionMatch[0];
+        
+        const fechaMatch = text.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
+        if (fechaMatch && !data.fecha_validacion) data.fecha_validacion = fechaMatch[0];
+        
+        // Limpiar valores
+        for (let key in data) {
+            if (data[key] && (data[key].toLowerCase().includes('http') || data[key].toLowerCase().includes('www'))) {
+                data[key] = '';
+            }
+        }
+        
         return data;
     }
 
@@ -600,12 +744,20 @@
             });
             progressFill.style.width = '100%';
             ocrStatus.textContent = '✅ OCR completado';
-            rawTextDiv.textContent = text.substring(0, 1000);
+            
+            // Mostrar texto extraído para depuración
+            rawTextDiv.textContent = text;
             ocrRawContainer.style.display = 'block';
+            
+            console.log('Texto OCR:', text);
+            
             const extracted = extractDataFromOCR(text);
             currentExtractedData = extracted;
             updateDataTable();
-            showToast('Datos extraídos correctamente');
+            
+            // Mostrar qué datos se extrajeron
+            const extractedFields = Object.entries(extracted).filter(([k,v]) => v && v !== '').length;
+            showToast(`✅ Extraídos ${extractedFields} campos de datos`);
         } catch(e) {
             console.error(e);
             ocrStatus.textContent = '❌ Error en OCR';
@@ -635,7 +787,7 @@
         }
     }
 
-    // ---------- COPIAR A GOOGLE SHEETS (con cédula al final) ----------
+    // ---------- COPIAR A GOOGLE SHEETS ----------
     function getGoogleSheetsRowWithUser() {
         const order = [
             "fecha_validacion", "validador", "estatus", "folio_siac", "tipo_venta", "estrategia",
@@ -668,15 +820,25 @@
         let txt = `📋 DATOS VALIDACIÓN (Usuario: ${currentUser?.nombreCompleto} - Cédula ${currentUser?.cedula})\n`;
         txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
         const fields = [
-            "FECHA VALIDACIÓN", "VALIDADOR", "ESTATUS", "FOLIO SIAC", "TIPO DE VENTA",
-            "ESTRATEGIA", "GERENTES", "CLAVE DE PROMOTOR", "NOMBRE DEL CLIENTE",
-            "CELULAR CLIENTE", "CELULAR REFERENCIA", "PAQUETE", "COSTO DEL PAQUETE",
-            "OBSERVACIÓN", "HORA", "DURACIÓN DE LLAMADA"
+            ["FECHA VALIDACIÓN", currentExtractedData.fecha_validacion],
+            ["VALIDADOR", currentExtractedData.validador],
+            ["ESTATUS", currentExtractedData.estatus],
+            ["FOLIO SIAC", currentExtractedData.folio_siac],
+            ["TIPO DE VENTA", currentExtractedData.tipo_venta],
+            ["ESTRATEGIA", currentExtractedData.estrategia],
+            ["GERENTES", currentExtractedData.gerentes],
+            ["CLAVE DE PROMOTOR", currentExtractedData.clave_promotor],
+            ["NOMBRE DEL CLIENTE", currentExtractedData.nombre_cliente],
+            ["CELULAR CLIENTE", currentExtractedData.celular_cliente],
+            ["CELULAR REFERENCIA", currentExtractedData.celular_referencia],
+            ["PAQUETE", currentExtractedData.paquete],
+            ["COSTO DEL PAQUETE", currentExtractedData.costo_paquete],
+            ["OBSERVACIÓN", currentExtractedData.observacion],
+            ["HORA", currentExtractedData.hora],
+            ["DURACIÓN DE LLAMADA", currentExtractedData.duracion_llamada]
         ];
-        const keys = Object.keys(currentExtractedData);
-        for (let i=0; i<fields.length; i++) {
-            const val = currentExtractedData[keys[i]] || '—';
-            txt += `${fields[i]}: ${val}\n`;
+        for (const [label, value] of fields) {
+            txt += `${label}: ${value || '—'}\n`;
         }
         navigator.clipboard.writeText(txt).then(() => showToast('Texto copiado')).catch(() => alert('No se pudo copiar'));
     }
