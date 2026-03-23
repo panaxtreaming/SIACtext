@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Pago Móvil OCR - Acceso con Cédula | Google Sheets</title>
+    <title>OCR Validación Ventas → Google Sheets</title>
     <!-- Tesseract.js para OCR -->
     <script src="https://unpkg.com/tesseract.js@5.0.0/dist/tesseract.min.js"></script>
     <style>
@@ -53,10 +53,6 @@
             backdrop-filter: blur(4px);
         }
 
-        .user-name {
-            font-weight: 600;
-        }
-
         .btn-switch-user {
             background: #f59e0b;
             border: none;
@@ -67,10 +63,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
-        }
-
-        .btn-switch-user:hover {
-            background: #d97706;
         }
 
         .main-grid {
@@ -128,24 +120,14 @@
             align-items: center;
             gap: 12px;
             transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             margin: 0.5rem;
-        }
-
-        .btn-capture:hover {
-            transform: translateY(-2px);
-        }
-
-        .preview-container {
-            margin-top: 1rem;
-            text-align: center;
         }
 
         .captured-image {
             max-width: 100%;
             max-height: 350px;
             border-radius: 0.75rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 1rem;
             border: 2px solid #e2e8f0;
         }
 
@@ -172,31 +154,32 @@
             transition: width 0.3s;
         }
 
+        /* Tabla de datos (ahora con scroll horizontal para muchos campos) */
+        .data-table-container {
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+        }
         .data-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 600px;
         }
-
         .data-table tr {
             border-bottom: 1px solid #e2e8f0;
         }
-
         .data-table td {
-            padding: 0.8rem 0.5rem;
+            padding: 0.6rem 0.5rem;
         }
-
         .data-table td:first-child {
             font-weight: 700;
-            color: #1e293b;
-            width: 38%;
             background: #f1f5f9;
-            border-radius: 12px 0 0 12px;
+            width: 35%;
         }
-
         .data-table td:last-child {
             font-family: monospace;
             cursor: pointer;
-            word-break: break-all;
+            word-break: break-word;
         }
 
         .btn-group {
@@ -223,17 +206,14 @@
             background: #10b981;
             color: white;
         }
-
         .btn-primary:hover {
             background: #059669;
             transform: translateY(-2px);
         }
-
         .btn-success {
             background: #3b82f6;
             color: white;
         }
-
         .btn-outline {
             background: white;
             border: 2px solid #cbd5e1;
@@ -252,7 +232,6 @@
             align-items: center;
             justify-content: center;
             z-index: 2000;
-            transition: all 0.3s;
         }
 
         .modal-card {
@@ -261,53 +240,26 @@
             padding: 2rem;
             width: 90%;
             max-width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-        }
-
-        .modal-card h2 {
-            margin-bottom: 1.5rem;
-            text-align: center;
-            color: #0f172a;
         }
 
         .input-group {
             margin-bottom: 1.2rem;
         }
-
-        .input-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.4rem;
-            color: #334155;
-        }
-
         .input-group input {
             width: 100%;
             padding: 0.8rem;
             border: 2px solid #e2e8f0;
             border-radius: 1rem;
-            font-size: 1rem;
-            transition: 0.2s;
         }
-
-        .input-group input:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-
         .btn-login {
             width: 100%;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             padding: 0.8rem;
-            border: none;
             border-radius: 2rem;
             font-weight: bold;
-            font-size: 1rem;
             cursor: pointer;
-            margin-top: 0.5rem;
         }
-
         .error-msg {
             color: #dc2626;
             font-size: 0.8rem;
@@ -328,23 +280,19 @@
             opacity: 0;
             transition: opacity 0.3s;
             pointer-events: none;
-            font-size: 0.9rem;
         }
-
         .toast.show {
             opacity: 1;
         }
-
+        .hidden {
+            display: none;
+        }
         .info-badge {
             background: #eef2ff;
             padding: 0.75rem;
             border-radius: 0.75rem;
             font-size: 0.8rem;
             margin-top: 1rem;
-        }
-
-        .hidden {
-            display: none;
         }
     </style>
 </head>
@@ -353,10 +301,10 @@
 <!-- Modal de inicio de sesión -->
 <div id="loginModal" class="modal">
     <div class="modal-card">
-        <h2>🔐 Acceso a la herramienta</h2>
+        <h2>🔐 Acceso</h2>
         <div class="input-group">
-            <label>📇 Número de Cédula</label>
-            <input type="text" id="loginCedula" placeholder="Ej: 12345678" autocomplete="off">
+            <label>📇 Cédula</label>
+            <input type="text" id="loginCedula" placeholder="Número de cédula">
         </div>
         <div class="input-group">
             <label>🔑 Contraseña</label>
@@ -364,69 +312,76 @@
         </div>
         <button class="btn-login" id="btnLogin">Ingresar</button>
         <div id="loginError" class="error-msg"></div>
-        <!-- Eliminado el mensaje de usuarios demo -->
     </div>
 </div>
 
 <div id="appContent" class="container hidden">
     <div class="header">
-        <h1>📸 Captura de Pantalla → OCR Pago Móvil → Google Sheets</h1>
+        <h1>📸 Captura → OCR Validación Ventas → Google Sheets</h1>
         <div class="user-info-bar">
-            <span>👤 Usuario: <span id="userFullName"></span></span>
+            <span>👤 <span id="userFullName"></span></span>
             <span>🆔 <span id="userCedula"></span></span>
-            <button class="btn-switch-user" id="btnSwitchUser">Cambiar de usuario</button>
+            <button class="btn-switch-user" id="btnSwitchUser">Cambiar usuario</button>
         </div>
     </div>
 
     <div class="main-grid">
-        <!-- Columna izquierda: Captura -->
+        <!-- Columna izquierda: captura -->
         <div class="card">
-            <div class="card-header">🖥️ 1. Captura de pantalla directa</div>
+            <div class="card-header">🖥️ Capturar pantalla / imagen</div>
             <div class="card-body">
                 <div class="capture-area">
                     <button class="btn-capture" id="btnCaptureScreen">📷 Capturar Pantalla</button>
-                    <button class="btn-capture btn-secondary-capture" id="btnCaptureWindow">🪟 Capturar Ventana</button>
+                    <button class="btn-capture" id="btnCaptureWindow">🪟 Capturar Ventana</button>
                 </div>
-                <div id="previewArea" style="text-align: center; min-height: 200px;">
-                    <div style="background: #f8fafc; border-radius: 1rem; padding: 2rem; color: #94a3b8;">🖼️ La captura aparecerá aquí</div>
+                <div id="previewArea" style="text-align:center;">
+                    <div style="background:#f8fafc; padding:2rem; border-radius:1rem;">🖼️ La captura aparecerá aquí</div>
                 </div>
                 <div class="ocr-progress" id="ocrProgress">
-                    <div style="font-weight: 600;">🔍 Extrayendo texto...</div>
+                    <div>🔍 Extrayendo texto...</div>
                     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-                    <div id="ocrStatus" class="ocr-status-text"></div>
+                    <div id="ocrStatus"></div>
                 </div>
-                <div id="ocrRawContainer" style="display: none; margin-top: 1rem; background: #f1f5f9; border-radius: 0.75rem; padding: 0.75rem; font-size: 0.7rem; max-height: 120px; overflow: auto;">
+                <div id="ocrRawContainer" style="display:none; margin-top:1rem; background:#f1f5f9; padding:0.75rem; border-radius:0.75rem; font-size:0.7rem; max-height:150px; overflow:auto;">
                     <strong>📄 Texto extraído:</strong>
-                    <div id="rawText" style="white-space: pre-wrap;"></div>
+                    <div id="rawText" style="white-space:pre-wrap;"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Columna derecha: Datos extraídos -->
+        <!-- Columna derecha: datos extraídos -->
         <div class="card">
-            <div class="card-header">📋 2. Datos extraídos (doble clic para editar)</div>
+            <div class="card-header">📋 Datos extraídos (doble clic para editar)</div>
             <div class="card-body">
-                <table class="data-table" id="dataTable">
-                    <tr><td>🧑 Nombre y Apellido</td><td id="field-nombre">—</td></tr>
-                    <tr><td>📞 Teléfono de contacto</td><td id="field-telefono">—</td></tr>
-                    <tr><td>✉️ Correo electrónico</td><td id="field-email">—</td></tr>
-                    <tr><td>🆔 Cédula (identidad)</td><td id="field-cedula">—</td></tr>
-                    <tr><td>🏦 Banco (Pago Móvil)</td><td id="field-banco">—</td></tr>
-                    <tr><td>💰 Cédula beneficiario</td><td id="field-cedula-beneficiario">—</td></tr>
-                    <tr><td>📱 Teléfono Pago Móvil</td><td id="field-telefono-pago">—</td></tr>
-                </table>
+                <div class="data-table-container">
+                    <table class="data-table" id="dataTable">
+                        <tr><td>📅 FECHA VALIDACIÓN</td><td id="field-fecha_validacion">—</td></tr>
+                        <tr><td>✅ VALIDADOR</td><td id="field-validador">—</td></tr>
+                        <tr><td>📊 ESTATUS</td><td id="field-estatus">—</td></tr>
+                        <tr><td>📄 FOLIO SIAC</td><td id="field-folio_siac">—</td></tr>
+                        <tr><td>🏷️ TIPO DE VENTA</td><td id="field-tipo_venta">—</td></tr>
+                        <tr><td>🎯 ESTRATEGIA</td><td id="field-estrategia">—</td></tr>
+                        <tr><td>👥 GERENTES</td><td id="field-gerentes">—</td></tr>
+                        <tr><td>🔑 CLAVE DE PROMOTOR</td><td id="field-clave_promotor">—</td></tr>
+                        <tr><td>🧑 NOMBRE DEL CLIENTE</td><td id="field-nombre_cliente">—</td></tr>
+                        <tr><td>📱 CELULAR CLIENTE</td><td id="field-celular_cliente">—</td></tr>
+                        <tr><td>📞 CELULAR REFERENCIA</td><td id="field-celular_referencia">—</td></tr>
+                        <tr><td>📦 PAQUETE</td><td id="field-paquete">—</td></tr>
+                        <tr><td>💰 COSTO DEL PAQUETE</td><td id="field-costo_paquete">—</td></tr>
+                        <tr><td>📝 OBSERVACIÓN</td><td id="field-observacion">—</td></tr>
+                        <tr><td>⏰ HORA</td><td id="field-hora">—</td></tr>
+                        <tr><td>⏱️ DURACIÓN DE LLAMADA</td><td id="field-duracion_llamada">—</td></tr>
+                    </table>
+                </div>
 
                 <div class="btn-group">
-                    <button class="btn btn-primary" id="btnCopySheets">
-                        📋 COPIAR PARA GOOGLE SHEETS + CÉDULA USUARIO
-                    </button>
+                    <button class="btn btn-primary" id="btnCopySheets">📋 COPIAR A GOOGLE SHEETS (+ cédula usuario)</button>
                     <button class="btn btn-success" id="btnCopyAll">📄 Copiar todo (texto)</button>
                     <button class="btn btn-outline" id="btnReset">🔄 Reiniciar</button>
                 </div>
 
                 <div class="info-badge">
-                    <strong>✨ Incluye automáticamente tu cédula al copiar a Sheets</strong><br>
-                    Al copiar se genera una fila con 8 columnas: los 7 datos extraídos + tu cédula.
+                    ✨ Se copiarán 17 columnas: los 16 campos extraídos + tu cédula.
                 </div>
             </div>
         </div>
@@ -437,26 +392,23 @@
 
 <script>
     // ---------- CONFIGURACIÓN ----------
-    // Reemplaza esta URL con la ruta RAW de tu archivo CSV en GitHub
-    const USERS_CSV_URL = 'https://raw.githubusercontent.com/panaxtreaming/SIACtext/main/usuarios.csv';
+    const USERS_CSV_URL = 'https://raw.githubusercontent.com/panaxtreaming/SIACtext/main/usuarios.csv'; // CAMBIAR A TU URL REAL
 
-    let currentUser = null; // { cedula, nombreCompleto }
+    let currentUser = null;
     let currentExtractedData = {
-        nombre: "", telefono: "", email: "", cedula: "",
-        banco: "", cedulaBeneficiario: "", telefonoPago: ""
+        fecha_validacion: "", validador: "", estatus: "", folio_siac: "", tipo_venta: "", estrategia: "",
+        gerentes: "", clave_promotor: "", nombre_cliente: "", celular_cliente: "", celular_referencia: "",
+        paquete: "", costo_paquete: "", observacion: "", hora: "", duracion_llamada: ""
     };
 
     // Elementos DOM
     const loginModal = document.getElementById('loginModal');
     const appContent = document.getElementById('appContent');
-    const loginCedula = document.getElementById('loginCedula');
-    const loginPassword = document.getElementById('loginPassword');
     const btnLogin = document.getElementById('btnLogin');
     const loginError = document.getElementById('loginError');
     const btnSwitchUser = document.getElementById('btnSwitchUser');
     const userFullNameSpan = document.getElementById('userFullName');
     const userCedulaSpan = document.getElementById('userCedula');
-
     const previewArea = document.getElementById('previewArea');
     const ocrProgressDiv = document.getElementById('ocrProgress');
     const progressFill = document.getElementById('progressFill');
@@ -465,172 +417,127 @@
     const rawTextDiv = document.getElementById('rawText');
     const toast = document.getElementById('toast');
 
-    // ---------- FUNCIONES AUXILIARES ----------
-    function showToast(msg, duration = 2500) {
+    function showToast(msg, duration=2500) {
         toast.textContent = msg;
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), duration);
     }
 
-    // Cargar usuarios desde CSV (sin fallback a demos)
+    // Cargar usuarios desde CSV (sin demo)
     async function loadUsersFromCSV() {
-        try {
-            const response = await fetch(USERS_CSV_URL);
-            if (!response.ok) {
-                throw new Error(`No se pudo cargar el archivo CSV (${response.status})`);
+        const response = await fetch(USERS_CSV_URL);
+        if (!response.ok) throw new Error(`No se pudo cargar CSV (${response.status})`);
+        const csvText = await response.text();
+        if (!csvText.trim()) throw new Error('CSV vacío');
+        const lines = csvText.split(/\r?\n/).filter(l => l.trim());
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const cedulaIdx = headers.findIndex(h => h.includes('cedula'));
+        const nombreIdx = headers.findIndex(h => h.includes('nombre'));
+        const passIdx = headers.findIndex(h => h.includes('contraseña') || h.includes('password'));
+        if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1)
+            throw new Error(`Formato CSV inválido. Encabezados: ${headers.join(', ')}`);
+        const users = [];
+        for (let i=1; i<lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.trim());
+            if (cols.length > Math.max(cedulaIdx, nombreIdx, passIdx)) {
+                users.push({
+                    cedula: cols[cedulaIdx],
+                    nombreCompleto: cols[nombreIdx],
+                    password: cols[passIdx]
+                });
             }
-            const csvText = await response.text();
-            if (!csvText.trim()) throw new Error('El archivo CSV está vacío');
-
-            const lines = csvText.split(/\r?\n/).filter(l => l.trim());
-            if (lines.length === 0) throw new Error('CSV sin líneas');
-
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-            const cedulaIdx = headers.findIndex(h => h.includes('cedula'));
-            const nombreIdx = headers.findIndex(h => h.includes('nombre'));
-            const passIdx = headers.findIndex(h => h.includes('contraseña') || h.includes('password') || h.includes('contrasena'));
-
-            if (cedulaIdx === -1 || nombreIdx === -1 || passIdx === -1) {
-                console.error('Encabezados encontrados:', headers);
-                throw new Error(`Formato CSV incorrecto. Se esperaban columnas: cedula, nombre, contraseña. Encontrado: ${headers.join(', ')}`);
-            }
-
-            const users = [];
-            for (let i = 1; i < lines.length; i++) {
-                const cols = lines[i].split(',').map(c => c.trim());
-                if (cols.length > Math.max(cedulaIdx, nombreIdx, passIdx)) {
-                    users.push({
-                        cedula: cols[cedulaIdx],
-                        nombreCompleto: cols[nombreIdx],
-                        password: cols[passIdx]
-                    });
-                }
-            }
-            if (users.length === 0) throw new Error('No se encontraron usuarios en el CSV');
-            return users;
-        } catch (error) {
-            console.error('Error cargando CSV:', error.message);
-            throw new Error(`Error al cargar usuarios: ${error.message}`);
         }
+        if (!users.length) throw new Error('No hay usuarios en CSV');
+        return users;
     }
 
-    // Validar credenciales
     async function authenticate(cedula, password) {
         const users = await loadUsersFromCSV();
-        const user = users.find(u => u.cedula === cedula && u.password === password);
-        if (user) {
-            return { cedula: user.cedula, nombreCompleto: user.nombreCompleto };
-        }
-        return null;
+        return users.find(u => u.cedula === cedula && u.password === password) || null;
     }
 
-    // Iniciar sesión
     async function login(cedula, password) {
-        loginError.textContent = '';
         try {
             const user = await authenticate(cedula, password);
             if (user) {
                 currentUser = user;
-                localStorage.setItem('pagoMovilUser', JSON.stringify(user));
+                localStorage.setItem('valUser', JSON.stringify(user));
                 loginModal.classList.add('hidden');
                 appContent.classList.remove('hidden');
                 userFullNameSpan.textContent = currentUser.nombreCompleto;
                 userCedulaSpan.textContent = currentUser.cedula;
-                showToast(`✅ Bienvenido, ${currentUser.nombreCompleto}`);
+                showToast(`Bienvenido, ${currentUser.nombreCompleto}`);
                 return true;
             } else {
                 loginError.textContent = 'Cédula o contraseña incorrecta';
                 return false;
             }
-        } catch (err) {
+        } catch(err) {
             loginError.textContent = err.message;
             return false;
         }
     }
 
-    // Cerrar sesión / cambiar usuario
     function logout() {
-        localStorage.removeItem('pagoMovilUser');
+        localStorage.removeItem('valUser');
         currentUser = null;
         appContent.classList.add('hidden');
         loginModal.classList.remove('hidden');
-        loginCedula.value = '';
-        loginPassword.value = '';
+        document.getElementById('loginCedula').value = '';
+        document.getElementById('loginPassword').value = '';
         loginError.textContent = '';
-        // Limpiar datos actuales
-        currentExtractedData = { nombre: "", telefono: "", email: "", cedula: "", banco: "", cedulaBeneficiario: "", telefonoPago: "" };
-        updateDataTable();
-        previewArea.innerHTML = `<div style="background: #f8fafc; border-radius: 1rem; padding: 2rem; color: #94a3b8;">🖼️ La captura aparecerá aquí</div>`;
-        ocrProgressDiv.style.display = 'none';
-        ocrRawContainer.style.display = 'none';
+        resetAll();
     }
 
-    // Verificar sesión al cargar
     async function checkSession() {
-        const stored = localStorage.getItem('pagoMovilUser');
+        const stored = localStorage.getItem('valUser');
         if (stored) {
             try {
                 const user = JSON.parse(stored);
-                // Validar que el usuario siga existiendo en el CSV
                 const users = await loadUsersFromCSV();
-                const valid = users.some(u => u.cedula === user.cedula);
-                if (valid) {
+                if (users.some(u => u.cedula === user.cedula)) {
                     currentUser = user;
                     loginModal.classList.add('hidden');
                     appContent.classList.remove('hidden');
                     userFullNameSpan.textContent = currentUser.nombreCompleto;
                     userCedulaSpan.textContent = currentUser.cedula;
                     return;
-                } else {
-                    // Usuario ya no está en el CSV, forzar logout
-                    logout();
                 }
-            } catch(e) {
-                // Si hay error al cargar CSV, no se puede validar, mejor pedir login de nuevo
-                logout();
-            }
-        } else {
-            loginModal.classList.remove('hidden');
-            appContent.classList.add('hidden');
+            } catch(e) {}
+        }
+        loginModal.classList.remove('hidden');
+        appContent.classList.add('hidden');
+    }
+
+    // ---------- ACTUALIZAR TABLA ----------
+    function updateDataTable() {
+        for (let key in currentExtractedData) {
+            const cell = document.getElementById(`field-${key}`);
+            if (cell) cell.innerHTML = (currentExtractedData[key] || '—') + '<span style="font-size:0.7rem; margin-left:6px;">✏️</span>';
         }
     }
 
-    // ---------- OCR Y EXTRACCIÓN (funciones ya existentes) ----------
-    function updateDataTable() {
-        document.getElementById('field-nombre').innerHTML = (currentExtractedData.nombre || '—') + '<span style="font-size:0.7rem; margin-left:6px;">✏️</span>';
-        document.getElementById('field-telefono').innerHTML = (currentExtractedData.telefono || '—') + '✏️';
-        document.getElementById('field-email').innerHTML = (currentExtractedData.email || '—') + '✏️';
-        document.getElementById('field-cedula').innerHTML = (currentExtractedData.cedula || '—') + '✏️';
-        document.getElementById('field-banco').innerHTML = (currentExtractedData.banco || '—') + '✏️';
-        document.getElementById('field-cedula-beneficiario').innerHTML = (currentExtractedData.cedulaBeneficiario || '—') + '✏️';
-        document.getElementById('field-telefono-pago').innerHTML = (currentExtractedData.telefonoPago || '—') + '✏️';
-    }
-
+    // Hacer editable cada campo
     function makeEditable() {
-        const fields = [
-            { id: 'field-nombre', key: 'nombre' }, { id: 'field-telefono', key: 'telefono' },
-            { id: 'field-email', key: 'email' }, { id: 'field-cedula', key: 'cedula' },
-            { id: 'field-banco', key: 'banco' }, { id: 'field-cedula-beneficiario', key: 'cedulaBeneficiario' },
-            { id: 'field-telefono-pago', key: 'telefonoPago' }
-        ];
-        fields.forEach(f => {
-            const el = document.getElementById(f.id);
+        const fields = Object.keys(currentExtractedData);
+        fields.forEach(key => {
+            const el = document.getElementById(`field-${key}`);
+            if (!el) return;
             el.style.cursor = 'pointer';
-            el.title = 'Doble clic para editar';
             el.addEventListener('dblclick', function() {
-                const currentVal = currentExtractedData[f.key] || '';
+                const currentVal = currentExtractedData[key] || '';
                 const input = document.createElement('input');
                 input.value = currentVal;
                 input.style.width = '95%';
-                input.style.padding = '4px 8px';
-                input.style.borderRadius = '8px';
+                input.style.padding = '4px';
                 input.style.border = '2px solid #10b981';
+                input.style.borderRadius = '8px';
                 const parent = this.parentNode;
                 const original = this;
                 parent.replaceChild(input, this);
                 input.focus();
                 function save() {
-                    currentExtractedData[f.key] = input.value.trim();
+                    currentExtractedData[key] = input.value.trim();
                     updateDataTable();
                     parent.replaceChild(original, input);
                 }
@@ -640,30 +547,41 @@
         });
     }
 
+    // ---------- EXTRACCIÓN DE DATOS DE LA IMAGEN (según el modelo dado) ----------
     function extractDataFromOCR(text) {
-        const data = { nombre: "", telefono: "", email: "", cedula: "", banco: "", cedulaBeneficiario: "", telefonoPago: "" };
-        const nombreMatch = text.match(/(?:Nombre\s*y\s*Apellido:|NOMBRE\s*Y\s*APELLIDO:?)\s*([^\n\r]{3,40})/i);
-        if (nombreMatch && nombreMatch[1].trim()) data.nombre = nombreMatch[1].trim();
-        const telefonoMatch = text.match(/(?:Teléfono\s*de\s*contacto:|Teléfono:|Telefono:?)\s*([\d\s\-\(\)]{7,15})/i) || text.match(/(0412|0414|0424|0416|0426)[\s\-]?(\d{7})/i);
-        if (telefonoMatch) {
-            let phone = telefonoMatch[0].replace(/[^\d]/g, '');
-            if (phone.length >= 10) data.telefono = phone.substring(0,4)+'-'+phone.substring(4);
-            else data.telefono = telefonoMatch[1]?.trim() || '';
+        const data = { ...currentExtractedData }; // inicializar vacío
+        // Función auxiliar para buscar valor después de una etiqueta
+        function getValueAfter(label) {
+            const regex = new RegExp(`${label}\\s*[:|]\\s*([^\\n\\r]{1,80})`, 'i');
+            const match = text.match(regex);
+            return match ? match[1].trim() : '';
         }
-        const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-        if (emailMatch) data.email = emailMatch[0];
-        const cedulaMatch = text.match(/(?:Cédula:|Cedula:|C.I:|CI:?)\s*([VvEe]?[\s\-]?\d{1,3}[\.\s]?\d{3}[\.\s]?\d{3,4})/i);
-        if (cedulaMatch) data.cedula = cedulaMatch[1].trim().replace(/\s/g, '');
-        if (text.match(/Banco\s*de\s*Venezuela/i)) data.banco = "Banco de Venezuela";
-        else if (text.match(/Banesco/i)) data.banco = "Banesco";
-        const cedulaBenef = text.match(/(?:Cédula:?)\s*(\d{1,2}\.\d{3}\.\d{3,4})/i) || text.match(/13\.967\.475/);
-        if (cedulaBenef) data.cedulaBeneficiario = cedulaBenef[1] || cedulaBenef[0];
-        const telfPago = text.match(/(0412|0414|0424)[\s\-]?(\d{7})/i);
-        if (telfPago) data.telefonoPago = telfPago[0].replace(/[^\d]/g,'').replace(/^(\d{4})(\d{7})/,'$1-$2');
-        if (text.includes('0412-0754787')) data.telefonoPago = "0412-0754787";
+
+        data.fecha_validacion = getValueAfter('FECHA VALIDACIÓN');
+        data.validador = getValueAfter('VALIDADOR');
+        data.estatus = getValueAfter('ESTATUS');
+        data.folio_siac = getValueAfter('FOLIO SIAC');
+        data.tipo_venta = getValueAfter('TIPO DE VENTA');
+        data.estrategia = getValueAfter('ESTRATEGIA');
+        data.gerentes = getValueAfter('GERENTES');
+        data.clave_promotor = getValueAfter('CLAVE DE PROMOTOR');
+        data.nombre_cliente = getValueAfter('NOMBRE DEL CLIENTE');
+        data.celular_cliente = getValueAfter('CELULAR CLIENTE');
+        data.celular_referencia = getValueAfter('CELULAR REFERENCIA');
+        data.paquete = getValueAfter('PAQUETE');
+        data.costo_paquete = getValueAfter('COSTO DEL PAQUETE');
+        data.observacion = getValueAfter('OBSERVACIÓN');
+        data.hora = getValueAfter('HORA');
+        data.duracion_llamada = getValueAfter('DURACIÓN DE LLAMADA');
+
+        // Limpieza básica
+        for (let k in data) {
+            if (data[k] === '') data[k] = '';
+        }
         return data;
     }
 
+    // ---------- PROCESAR IMAGEN CON OCR ----------
     async function processImageFromCanvas(canvas) {
         ocrProgressDiv.style.display = 'block';
         ocrRawContainer.style.display = 'none';
@@ -682,7 +600,7 @@
             });
             progressFill.style.width = '100%';
             ocrStatus.textContent = '✅ OCR completado';
-            rawTextDiv.textContent = text.substring(0, 800);
+            rawTextDiv.textContent = text.substring(0, 1000);
             ocrRawContainer.style.display = 'block';
             const extracted = extractDataFromOCR(text);
             currentExtractedData = extracted;
@@ -691,7 +609,7 @@
         } catch(e) {
             console.error(e);
             ocrStatus.textContent = '❌ Error en OCR';
-            showToast('Error al procesar la captura');
+            showToast('Error al procesar la imagen');
         }
     }
 
@@ -708,28 +626,25 @@
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
             const imgURL = canvas.toDataURL('image/png');
-            previewArea.innerHTML = `<div class="preview-container"><img src="${imgURL}" class="captured-image"><div style="font-size:0.75rem; color:#10b981;">✅ Captura lista</div></div>`;
+            previewArea.innerHTML = `<img src="${imgURL}" class="captured-image" style="max-width:100%;">`;
             await processImageFromCanvas(canvas);
             stream.getTracks().forEach(t => t.stop());
         } catch(err) {
-            if(err.name !== 'NotAllowedError') showToast('Error al capturar: ' + err.message);
+            if(err.name !== 'NotAllowedError') showToast('Error: ' + err.message);
             ocrProgressDiv.style.display = 'none';
         }
     }
 
-    // Copiar a Google Sheets incluyendo la cédula del usuario
+    // ---------- COPIAR A GOOGLE SHEETS (con cédula al final) ----------
     function getGoogleSheetsRowWithUser() {
-        const baseRow = [
-            currentExtractedData.nombre || '',
-            currentExtractedData.telefono || '',
-            currentExtractedData.email || '',
-            currentExtractedData.cedula || '',
-            currentExtractedData.banco || '',
-            currentExtractedData.cedulaBeneficiario || '',
-            currentExtractedData.telefonoPago || ''
+        const order = [
+            "fecha_validacion", "validador", "estatus", "folio_siac", "tipo_venta", "estrategia",
+            "gerentes", "clave_promotor", "nombre_cliente", "celular_cliente", "celular_referencia",
+            "paquete", "costo_paquete", "observacion", "hora", "duracion_llamada"
         ];
-        baseRow.push(currentUser ? currentUser.cedula : '');
-        return baseRow.join('\t');
+        const row = order.map(key => currentExtractedData[key] || '');
+        row.push(currentUser ? currentUser.cedula : '');
+        return row.join('\t');
     }
 
     async function copyToSheets() {
@@ -737,7 +652,7 @@
         const row = getGoogleSheetsRowWithUser();
         try {
             await navigator.clipboard.writeText(row);
-            showToast('📊 Copiado con tu cédula - Listo para pegar en Google Sheets');
+            showToast('📊 Copiado (16 datos + cédula) - pegar en Google Sheets');
         } catch {
             const ta = document.createElement('textarea');
             ta.value = row;
@@ -745,28 +660,31 @@
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            showToast('Copiado (fallback) - Pega en Sheets');
+            showToast('Copiado (fallback) - pegar en Sheets');
         }
     }
 
     function copyFullText() {
-        const full = `📋 Datos Pago Móvil (Usuario: ${currentUser?.nombreCompleto || ''} - Cédula ${currentUser?.cedula || ''})
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧑 Nombre: ${currentExtractedData.nombre || '—'}
-📞 Teléfono contacto: ${currentExtractedData.telefono || '—'}
-✉️ Email: ${currentExtractedData.email || '—'}
-🆔 Cédula: ${currentExtractedData.cedula || '—'}
-🏦 Banco: ${currentExtractedData.banco || '—'}
-💰 Cédula beneficiario: ${currentExtractedData.cedulaBeneficiario || '—'}
-📱 Teléfono Pago: ${currentExtractedData.telefonoPago || '—'}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
-        navigator.clipboard.writeText(full).then(() => showToast('Texto copiado')).catch(() => alert('No se pudo copiar'));
+        let txt = `📋 DATOS VALIDACIÓN (Usuario: ${currentUser?.nombreCompleto} - Cédula ${currentUser?.cedula})\n`;
+        txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        const fields = [
+            "FECHA VALIDACIÓN", "VALIDADOR", "ESTATUS", "FOLIO SIAC", "TIPO DE VENTA",
+            "ESTRATEGIA", "GERENTES", "CLAVE DE PROMOTOR", "NOMBRE DEL CLIENTE",
+            "CELULAR CLIENTE", "CELULAR REFERENCIA", "PAQUETE", "COSTO DEL PAQUETE",
+            "OBSERVACIÓN", "HORA", "DURACIÓN DE LLAMADA"
+        ];
+        const keys = Object.keys(currentExtractedData);
+        for (let i=0; i<fields.length; i++) {
+            const val = currentExtractedData[keys[i]] || '—';
+            txt += `${fields[i]}: ${val}\n`;
+        }
+        navigator.clipboard.writeText(txt).then(() => showToast('Texto copiado')).catch(() => alert('No se pudo copiar'));
     }
 
     function resetAll() {
-        currentExtractedData = { nombre:"", telefono:"", email:"", cedula:"", banco:"", cedulaBeneficiario:"", telefonoPago:"" };
+        for (let k in currentExtractedData) currentExtractedData[k] = '';
         updateDataTable();
-        previewArea.innerHTML = `<div style="background:#f8fafc; border-radius:1rem; padding:2rem; color:#94a3b8;">🖼️ La captura aparecerá aquí</div>`;
+        previewArea.innerHTML = `<div style="background:#f8fafc; padding:2rem; border-radius:1rem;">🖼️ La captura aparecerá aquí</div>`;
         ocrProgressDiv.style.display = 'none';
         ocrRawContainer.style.display = 'none';
         showToast('Datos reiniciados');
@@ -774,8 +692,8 @@
 
     // Eventos
     btnLogin.addEventListener('click', async () => {
-        const ced = loginCedula.value.trim();
-        const pass = loginPassword.value.trim();
+        const ced = document.getElementById('loginCedula').value.trim();
+        const pass = document.getElementById('loginPassword').value.trim();
         if (!ced || !pass) { loginError.textContent = 'Complete ambos campos'; return; }
         await login(ced, pass);
     });
@@ -786,7 +704,7 @@
     document.getElementById('btnCopyAll').addEventListener('click', copyFullText);
     document.getElementById('btnReset').addEventListener('click', resetAll);
 
-    // Inicializar
+    // Inicialización
     checkSession();
     makeEditable();
     updateDataTable();
